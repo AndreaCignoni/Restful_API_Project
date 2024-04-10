@@ -249,7 +249,7 @@ def create_record():
 @app.route('/records', methods=['GET'])
 def browse_records():
     data = request.json
-    return jsonfy(records), 200
+    return jsonify(records), 200
         
 # Endpoint to search a record by title
 @app.route('/records/<title>', methods=['GET'])
