@@ -15,17 +15,32 @@ import json
 from flask import Flask, request, jsonify, make_response
 from pydantic import BaseModel
 from typing import List, Optional
-import random
-from random import randrange
+import psycopg2
+from psycopg2.extras import RealDictCursor
+from configDB import DATABASE_CONFIG
+import time
 
 app = Flask(__name__)
+
+# Postgre VynilRecordCollectorAPI database connection
+while True:
+    try:
+        # Establish the database connection using the configuration
+        conn = psycopg2.connect(**DATABASE_CONFIG)
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        print("Database connection was successful!")
+        break
+    except Exception as error:
+        print("Connect to database failed!")
+        print("Error: ", error)
+        time.sleep(2)
+
 
 # Users database:
 users = []
 
 # Define Pydantic model for user registration
 class UserRegistration(BaseModel):
-    id: Optional[int]
     fname: str
     lname: str
     gender: str
@@ -54,7 +69,6 @@ class Comment(BaseModel):
     comment: str
 
 class RecordForm(BaseModel):
-    record_id: Optional[int]
     title: str
     author: str
     label: str
@@ -62,9 +76,9 @@ class RecordForm(BaseModel):
     condition: str
     cost: int 
     year_of_purchase: int
-    offers: Optional[List[str]] = []
+    offers: Optional[List[int]] = []
     comments: Optional[List[str]] = []
-    user_id: int
+    username: str # This should match a username in the users table
     
 class RecordUpdate(BaseModel):
     title: Optional[str]
@@ -74,79 +88,60 @@ class RecordUpdate(BaseModel):
     condition: Optional[str]
     cost: Optional[int]
     year_of_purchase: Optional[int]
-    offer: Optional[Offer]  # Change to type Offer
-    comment: Optional[Comment]  # Change to type Comment
-    user_id: int
+    offers: Optional[int]  
+    comment: Optional[Comment]
+    username: str # This should match a username in the users table
 
-# Define a list to store user data
-users = [
-    {
-        "id": 123,
-        "fname": "John",
-        "lname": "Doe",
-        "gender": "Male",
-        "nationality": "US",
-        "email": "john.doe@example.com",
-        "username": "johndoe",
-        "password": "securepassword"
-    },
-    {
-        "id": 456,
-        "fname": "Jane",
-        "lname": "Smith",
-        "gender": "Female",
-        "nationality": "UK",
-        "email": "jane.smith@example.com",
-        "username": "janesmith",
-        "password": "anothersecurepassword"
-    }
-]
 
 # Endpoint to provide basic information about the API
 @app.route('/')
 def index():
     return """
-    <h1>Welcome to the Vinyl Collector API</h1>
+    <h1>Welcome to the Vinyl Record Collector API!</h1>
+    <p>Database Connection: Successful</p>
+    <h2>API Endpoints:</h2>
+    <ul>
+        <li>/users : Manage user registration and profile updates</li>
+        <li>/records : Manage records, including adding, updating, and retrieving records</li>
+        <li>/offers : Manage offers for records</li>
+        <li>/comments : Manage comments on records</li>
+    </ul>
     <p>Are you registered yet? </p>
     <ul>
-        <li><a href="/registration_form">Register</a></li>
+        <li><a href="/registration_form">Register</a></li> <!-- Link to the registration form -->
     <p>Otherwise: </p>
-        <li><a href="/login">Login</a></li>
+        <li><a href="/login">Login</a></li> <!-- Link to the login page -->
     </ul>
     """
-
-# Endpoint for user registration
+# Endpoint for user CREATION
 @app.route('/registration_form', methods=['POST'])
 def register():
-    data = request.json
     try:
         # Validate incoming JSON data using Pydantic model
-        registration_data = UserRegistration(**data)
-        print(registration_data.dict())
+        registration_data = UserRegistration(**request.json)
+
+        # Execute SQL query to insert user data into the database
+        cursor.execute("""
+            INSERT INTO users (fname, lname, gender, nationality, email, username, password) 
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """, (
+            registration_data.fname,
+            registration_data.lname,
+            registration_data.gender,
+            registration_data.nationality,
+            registration_data.email,
+            registration_data.username,
+            registration_data.password
+        ))
         
-        # Generate a random user ID
-        new_user_id = random.randrange(1, 10000000)
-        
-        # Create a dictionary representing the user
-        new_user = {
-            'id': new_user_id,
-            'fname': registration_data.fname,
-            'lname': registration_data.lname,
-            'gender': registration_data.gender,
-            'nationality': registration_data.nationality,
-            'email': registration_data.email,
-            'username': registration_data.username,
-            'password': registration_data.password
-        }
-        
-        # Add the new user to the users list
-        users.append(new_user)
+        # Commit the transaction
+        conn.commit()
 
         return "User registered successfully"
     except Exception as e:
-        return f"Validation error: {str(e)}", 400
-    
-    
+        # Handle database and validation errors
+        return f"Registration error: {str(e)}", 400
+
 # Endpoint for user login
 @app.route('/login', methods=['POST'])
 def login():
@@ -154,240 +149,227 @@ def login():
     username = data.get('username')
     password = data.get('password')
 
-    # Search for the user in the users list by username
-    user = next((user for user in users if user['username'] == username), None)
+    try:
+        # Execute SQL query to retrieve user with the provided username
+        cursor.execute("SELECT id, password FROM users WHERE username = %s", (username,))
+        user = cursor.fetchone()
 
-    if user:
-        # Check if the password matches
-        if user['password'] == password:
-            return jsonify({"message": "Login successful", "user_id": user['id']}), 200
+        if user:
+            user_id, hashed_password = user['id'], user['password']
+            # Verify password
+            if hashed_password == password:
+                return jsonify({"message": "Login successful", "user_id": user_id}), 200
+            else:
+                return jsonify({"error": "Incorrect password"}), 401
         else:
-            return jsonify({"error": "Incorrect password"}), 401
-    else:
-        return jsonify({"error": "User not found"}), 404
+            return jsonify({"error": "User not found"}), 404
+    except Exception as e:
+        # Handle database errors
+        return jsonify({"error": f"Database error: {str(e)}"}), 500
+
     
-# Endpoint to browse users
+# Endpoint to browse all users
 @app.route('/users', methods=['GET'])
 def browse():
-    data = request.json
-    return jsonify(users), 200
-        
-# Endpoint to search specific users by ID
-@app.route('/users/id/<int:user_id>', methods=['GET'])
-def search_by_id(user_id):
-    # Logic to search for the user profile based on the user ID
-    user_profile = next((user for user in users if user['id'] == user_id), None)
+    try:
+        cursor.execute("""SELECT * FROM users""")
+        users = cursor.fetchall()
+        return jsonify(users), 200
+    except Exception as e:
+        # If an error occurs during database query execution, return a 500 Internal Server Error response
+        return f"An error occurred: {str(e)}", 500
     
-    if user_profile:
-        return jsonify(user_profile), 200
+# Route to search for user by ID
+@app.route('/users/<int:id>', methods=['GET'])
+def search_id(id):
+    # Execute SQL query to fetch user from database
+    with conn.cursor() as cursor:
+        cursor.execute("SELECT * FROM users WHERE id = %s", (id,))
+        user = cursor.fetchone()
+
+    # Check if user is found in the database
+    if user:
+        return jsonify(user), 200
+    else:
+        return jsonify({"error": "User not found"}), 404
+    
+# Route to search for user by username
+@app.route('/users/<username>', methods=['GET'])
+def search_username(username):
+    # Execute SQL query to fetch user from database
+    with conn.cursor() as cursor:
+        cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
+        user = cursor.fetchone()
+
+    # Check if user is found in the database
+    if user:
+        return jsonify(user), 200
     else:
         return jsonify({"error": "User not found"}), 404
 
-# Endpoint to search specific users by username
-@app.route('/users/username/<username>', methods=['GET'])
-def search_by_username(username):
-    user_profile = next((user for user in users if user['username'] == username), None)
+# To UPDATE a user's details
+@app.route('/users/<username>', methods=['PUT'])
+def update_user(username):
+    try:
+        data = request.json
+        cursor.execute("""
+        UPDATE users
+        SET fname = %s, lname = %s, gender = %s, nationality = %s, email = %s, username = %s, password = %s
+        WHERE username = %s
+        """, (
+            data.get('fname'),
+            data.get('lname'),
+            data.get('gender'),
+            data.get('nationality'),
+            data.get('email'),
+            data.get('username'),
+            data.get('password'),
+            username
+        ))
+        conn.commit()
+
+        if cursor.rowcount > 0:
+            return jsonify({"message": "User profile updated successfully"}), 200
+        else:
+            return jsonify({"error": "User not found"}), 404
+    except Exception as e:
+        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+
+#Route to DELETE a user profile   
+@app.route('/users/<username>', methods=['DELETE'])
+def delete_user(username):
+    try:
+        # Attempt to delete the user
+        with conn.cursor() as cursor:
+            cursor.execute("DELETE FROM users WHERE username = %s", (username,))
+            if cursor.rowcount > 0:
+                return jsonify({"message": "User deleted successfully"}), 200
+            else:
+                return jsonify({"error": "User not found"}), 404
+    except psycopg2.errors.ForeignKeyViolation as e:
+        # Handle foreign key violation error
+        return jsonify({"error": "User cannot be deleted until all listings are deleted"}), 409
     
-    if user_profile:
-        return jsonify(user_profile), 200
-    else:
-        return jsonify({"error": "User not found"}), 404
-        
-# Endpoint to update a user profile
-@app.route('/users/<int:user_id>', methods=['PUT'])
-def update_user(user_id):
-    data = request.json
-    user_profile = next((user for user in users if user['id'] == user_id), None)
-    if user_profile:
-        user_update_data = UserUpdate(**data)
-        user_profile.update(user_update_data.dict())
-        return jsonify({"message": "User profile updated successfully"}), 200
-    else:
-        return jsonify({"error": "User not found"}), 404
-    
-# Endpoint to delete a user profile
-@app.route('/users/<int:user_id>', methods=['DELETE'])
-def delete_user(user_id):
-    global users
-    users = [user for user in users if user['id'] != user_id]
-    return jsonify({"message": "User deleted successfully"})
+# Endpoint to browse all records
+@app.route('/records', methods=['GET'])
+def browse_records():
+    try:
+        cursor.execute("""SELECT * FROM records""")
+        users = cursor.fetchall()
+        return jsonify(users), 200
+    except Exception as e:
+        # If an error occurs during database query execution, return a 500 Internal Server Error response
+        return f"An error occurred: {str(e)}", 500
 
 # Endpoint to create a new record
 @app.route('/records/new', methods=['POST'])
 def create_record():
-    data = request.json
     try:
+        # Get JSON data from the request
+        data = request.json
         # Validate incoming JSON data using Pydantic model
         registered_record = RecordForm(**data)
-        print(registered_record.dict())
-        
-        # Generate a random record ID
-        new_record_id = random.randint(1, 10000000)
-        
-        # Create a dictionary representing a record
-        new_record = {
-            'record_id': new_record_id,
-            'title': registered_record.title,
-            'author': registered_record.author,
-            'label': registered_record.label,
-            'year': registered_record.year,
-            'condition': registered_record.condition,
-            'cost': registered_record.cost,
-            'year_of_purchase': registered_record.year_of_purchase,
-            'offers': registered_record.offers,
-            'comments': registered_record.comments,
-            'user_id': registered_record.user_id  # Set user_id
-        }
-        
-        # Add the new record to the records list
-        records.append(new_record)
+
+        # Execute SQL query to insert user data into the database
+        cursor.execute("""
+            INSERT INTO records (title, author, label, year, condition, cost, year_of_purchase, offers, comments, username) 
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """, (
+            registered_record.title,
+            registered_record.author,
+            registered_record.label,
+            registered_record.year,
+            registered_record.condition,
+            registered_record.cost,
+            registered_record.year_of_purchase,
+            registered_record.offers,
+            registered_record.comments,
+            registered_record.username
+        ))
+
+        # Commit the transaction
+        conn.commit()
+
         return "Record registered successfully"
     except Exception as e:
+        # Rollback the transaction in case of an error
+        conn.rollback()
         return f"Validation error: {str(e)}", 400
-        
-# Endpoint to browse records
-@app.route('/records', methods=['GET'])
-def browse_records():
-    data = request.json
-    return jsonify(records), 200
-        
-# Endpoint to search a record by title
+
+# Endpoint to search records by title
 @app.route('/records/<title>', methods=['GET'])
-def record_search_by_title(title):
-    record = next((record for record in records if record['title'] == title), None)
-    if record:
-        return jsonify({"message": f"Here are the results for {title}", "record": record}), 200
-    else:
-        return jsonify({"error": "Record not found"}), 404
-        
-# Endpoint to search a record by ID
-@app.route('/records/<int:record_id>', methods=['GET'])
-def record_search_by_id(record_id):
-    record = next((record for record in records if record['record_id'] == record_id), None)
-    if record:
-        return jsonify({"message": f"Here are the results for {record_id}", "record": record}), 200
-    else:
-        return jsonify({"error": "Record not found"}), 404
-        
-# Endpoint to update a record's detail
-@app.route('/records/<int:record_id>', methods=['PUT'])
-def update_record(record_id):
-    data = request.json
-    record = next((record for record in records if record['record_id'] == record_id), None)
-    if record:
-        # Update the record details
-        record_update_data = RecordUpdate(**data)
-        record.update(record_update_data.dict())
-        
-        # Update offer if provided in the request data
-        if 'offer' in data:
-            record['offer'] = data['offer']
-        
-        # Update comments if provided in the request data
-        if 'comments' in data:
-            record['comments'] = data['comments']
-        
-        return jsonify({"message": "Record updated successfully", "record": record}), 200
-    else:
-        return jsonify({"error": "Record not found"}), 404
+def search_record(title):
+    # Execute SQL query to fetch records with the same title from database
+    with conn.cursor() as cursor:
+        cursor.execute("SELECT * FROM records WHERE title = %s", (title,))
+        records = cursor.fetchall()
 
-# Endpoint to delete a vinyl record by ID
-@app.route('/records/<int:record_id>', methods=['DELETE'])
-def delete_record(record_id):
-    global records
-    records = [record for record in records if record['record_id'] != record_id]
-    return jsonify({"message": "Record deleted successfully"})
+    # Check if any records are found in the database
+    if records:
+        # If records are found, return them as JSON response
+        return jsonify(records), 200
+    else:
+        # If no records are found, return error message
+        return jsonify({"error": "Record not found"}), 404
     
-# Endpoint to create a new offer for a record
-@app.route('/records/<int:record_id>/offers', methods=['POST'])
-def create_offer(record_id):
-    data = request.json
+# Endpoint to search records by ID
+@app.route('/records/<int:record_id>', methods=['GET'])
+def search_recordID(record_id):
+    # Execute SQL query to fetch records with the same title from database
+    with conn.cursor() as cursor:
+        cursor.execute("SELECT * FROM records WHERE record_id = %s", (record_id,))
+        records = cursor.fetchall()
+
+    # Check if any records are found in the database
+    if records:
+        # If records are found, return them as JSON response
+        return jsonify(records), 200
+    else:
+        # If no records are found, return error message
+        return jsonify({"error": "Record not found"}), 404
+    
+# Endpoint to update a record's detail
+@app.route('/records/<title>', methods=['PUT'])
+def update_record(title):
     try:
-        # Validate incoming JSON data using Pydantic model
-        offer_data = Offer(**data)
-        
-        # Find the record
-        record = next((record for record in records if record['record_id'] == record_id), None)
-        if record:
-            # Update the offer field of the record
-            record['offer'] = offer_data.offer
-            
-            return jsonify({"message": "Offer created successfully", "record": record}), 200
+        data = request.json
+        cursor.execute("""
+        UPDATE records
+        SET title = %s, author = %s, label = %s, year = %s, condition = %s, cost = %s, year_of_purchase = %s, comments =%s
+        WHERE title = %s
+        """, (
+            data.get('title'),
+            data.get('author'),
+            data.get('label'),
+            data.get('year'),
+            data.get('condition'),
+            data.get('cost'),
+            data.get('year_of_purchase'),
+            data.get('comments'),
+            title
+        ))
+        conn.commit()
+
+        if cursor.rowcount > 0:
+            return jsonify({"message": "Record form updated successfully"}), 200
         else:
             return jsonify({"error": "Record not found"}), 404
     except Exception as e:
-        return f"Validation error: {str(e)}", 400
-
-# Endpoint to add a comment to a record
-@app.route('/records/<int:record_id>/comments', methods=['POST'])
-def add_comment(record_id):
-    data = request.json
+        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+    
+# Endpoint to DELETE a uregistered record
+@app.route('/records/<title>', methods=['DELETE'])
+def delete_record(title):
     try:
-        # Validate incoming JSON data using Pydantic model
-        comment_data = Comment(**data)
-        
-        # Find the record
-        record = next((record for record in records if record['record_id'] == record_id), None)
-        if record:
-            # Add the comment to the record
-            if 'comments' in record:
-                record['comments'].append(comment_data.comment)
+        # Attempt to delete a record
+        with conn.cursor() as cursor:
+            cursor.execute("DELETE FROM records WHERE title = %s", (title,))
+            if cursor.rowcount > 0:
+                return jsonify({"message": "Record deleted successfully"}), 200
             else:
-                record['comments'] = [comment_data.comment]
-            
-            return jsonify({"message": "Comment added successfully", "record": record}), 200
-        else:
-            return jsonify({"error": "Record not found"}), 404
+                return jsonify({"error": "Record not found"}), 404
     except Exception as e:
-        return f"Validation error: {str(e)}", 400
-
+        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+    
 if __name__ == '__main__':
     app.run(debug=True)
-
-''''''''''
--- Create a table for users
-CREATE TABLE users (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    fname VARCHAR(255) NOT NULL,
-    lname VARCHAR(255) NOT NULL,
-    gender VARCHAR(10),
-    nationality VARCHAR(255),
-    email VARCHAR(255) NOT NULL,
-    username VARCHAR(255) NOT NULL,
-    password VARCHAR(255) NOT NULL
-);
-
--- Create a table for records
-CREATE TABLE records (
-    record_id INT AUTO_INCREMENT PRIMARY KEY,
-    title VARCHAR(255) NOT NULL,
-    author VARCHAR(255) NOT NULL,
-    label VARCHAR(255),
-    year INT,
-    condition VARCHAR(50),
-    cost INT,
-    year_of_purchase INT,
-    user_id INT, -- New field to store the user ID who posted the record
-    FOREIGN KEY (user_id) REFERENCES users(id)
-);
-
--- Create a table for offers
-CREATE TABLE offers (
-    offer_id INT AUTO_INCREMENT PRIMARY KEY,
-    offer VARCHAR(255) NOT NULL,
-    record_id INT,
-    user_id INT,
-    FOREIGN KEY (record_id) REFERENCES records(record_id),
-    FOREIGN KEY (user_id) REFERENCES users(id)
-);
-
--- Create a table for comments
-CREATE TABLE comments (
-    comment_id INT AUTO_INCREMENT PRIMARY KEY,
-    comment VARCHAR(255) NOT NULL,
-    record_id INT,
-    user_id INT,
-    FOREIGN KEY (record_id) REFERENCES records(record_id),
-    FOREIGN KEY (user_id) REFERENCES users(id)
-);
-'''''
