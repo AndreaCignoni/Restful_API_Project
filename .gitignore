@@ -1,1 +1,10 @@
+# DS_Store file
 .DS_Store
+
+# Config file
+configDB.py
+
+# Virtual Environment
+venv/
+env/
+.venv/

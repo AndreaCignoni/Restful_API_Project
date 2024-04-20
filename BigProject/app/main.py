@@ -17,7 +17,7 @@ from pydantic import BaseModel
 from typing import List, Optional
 import psycopg2
 from psycopg2.extras import RealDictCursor
-from configDB import DATABASE_CONFIG
+from configDB  import DATABASE_CONFIG
 import time
 
 app = Flask(__name__)
