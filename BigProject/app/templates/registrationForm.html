@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registration Form</title>
+</head>
+<body>
+    <form id="registrationForm">
+        <!-- Your registration form inputs here -->
+        <input type="text" name="fname" placeholder="First Name">
+        <input type="text" name="lname" placeholder="Last Name">
+        <input type="text" name="gender" placeholder="Gender">
+        <input type="text" name="nationality" placeholder="Nationality">
+        <input type="email" name="email" placeholder="Email">
+        <input type="text" name="username" placeholder="Username">
+        <input type="password" name="password" placeholder="Password">
+        <button type="submit" class="btn btn-secondary">Submit</button>
+    </form>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('registrationForm');
+
+            // Add submit event listener to registration form
+            form.addEventListener('submit', async (event) => {
+                event.preventDefault(); // Prevent default form submission
+
+                // Serialize form data into URL-encoded format
+                const formData = new URLSearchParams(new FormData(form));
+
+                // Make AJAX request
+                try {
+                    const response = await fetch('/registration_form', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded' // Set content type to URL-encoded
+                        },
+                        body: formData // Pass URL-encoded form data
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Failed to register user');
+                    }
+
+                    const result = await response.text();
+                    console.log(result); // Log success message
+                    // You can handle success here, like redirecting the user or showing a success message
+
+                } catch (error) {
+                    console.error('Error registering user:', error.message);
+                    // You can handle errors here, like showing an error message to the user
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Profile</title>
+</head>
+<body>
+    <h1>User Profile</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>First Name</th>
+                <th>Last Name</th>
+                <th>Gender</th>
+                <th>Nationality</th>
+                <th>Email</th>
+                <th>Username</th>
+            </tr>
+        </thead>
+        <tbody id="userProfile">
+            <!-- User data will be populated here dynamically -->
+        </tbody>
+    </table>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchUser();
+
+            async function fetchUser() {
+                try {
+                    const userId = window.location.pathname.split('/').pop();
+                    const response = await fetch(`/users/${userId}`);
+                    const user = await response.json();
+
+                    if (response.ok) {
+                        displayUser(user);
+                    } else {
+                        console.error('Failed to fetch user:', user.error);
+                    }
+                } catch (error) {
+                    console.error('Fetch user error:', error.message);
+                }
+            }
+
+            function displayUser(user) {
+                const userProfile = document.getElementById('userProfile');
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${user.id}</td>
+                    <td>${user.fname}</td>
+                    <td>${user.lname}</td>
+                    <td>${user.gender}</td>
+                    <td>${user.nationality}</td>
+                    <td>${user.email}</td>
+                    <td>${user.username}</td>
+                `;
+                userProfile.appendChild(row);
+            }
+        });
+    </script>
+</body>
+</html>

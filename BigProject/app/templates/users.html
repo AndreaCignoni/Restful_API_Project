@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Users</title>
+</head>
+<body>
+    <h1>Users</h1>
+    <table>
+        <thead>
+            {% for user in users %}
+            <tr>
+                <td>{{ user['id'] }}</td>
+                <td>{{ user['fname'] }}</td>
+                <td>{{ user['lname'] }}</td>
+                <td>{{ user['gender'] }}</td>
+                <td>{{ user['nationality'] }}</td>
+                <td>{{ user['email'] }}</td>
+                <td>{{ user['username'] }}</td>
+            </tr>
+            {% endfor %}           
+        </thead>
+        <tbody id="usersList">
+            <!-- User data will be populated here dynamically -->
+        </tbody>
+    </table>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchUsers();
+
+            async function fetchUsers() {
+                try {
+                    const response = await fetch('/users');
+                    const users = await response.json();
+
+                    if (response.ok) {
+                        displayUsers(users);
+                    } else {
+                        console.error('Failed to fetch users:', users.error);
+                    }
+                } catch (error) {
+                    console.error('Fetch users error:', error.message);
+                }
+            }
+
+            function displayUsers(users) {
+                const usersList = document.getElementById('usersList');
+
+                users.forEach(user => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${user.id}</td>
+                        <td>${user.fname}</td>
+                        <td>${user.lname}</td>
+                        <td>${user.gender}</td>
+                        <td>${user.nationality}</td>
+                        <td>${user.email}</td>
+                        <td>${user.username}</td>
+                        <!-- You can add more table cells for other user attributes -->
+                    `;
+                    usersList.appendChild(row);
+                });
+            }
+        });
+    </script>
+</body>
+</html>

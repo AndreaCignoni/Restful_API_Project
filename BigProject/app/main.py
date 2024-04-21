@@ -12,7 +12,7 @@
 
 # Author: Andrea Cignoni
 import json
-from flask import Flask, request, jsonify, make_response
+from flask import Flask, request, jsonify, make_response, render_template
 from pydantic import BaseModel
 from typing import List, Optional
 import psycopg2
@@ -96,76 +96,66 @@ class RecordUpdate(BaseModel):
 # Endpoint to provide basic information about the API
 @app.route('/')
 def index():
-    return """
-    <h1>Welcome to the Vinyl Record Collector API!</h1>
-    <p>Database Connection: Successful</p>
-    <h2>API Endpoints:</h2>
-    <ul>
-        <li>/users : Manage user registration and profile updates</li>
-        <li>/records : Manage records, including adding, updating, and retrieving records</li>
-        <li>/offers : Manage offers for records</li>
-        <li>/comments : Manage comments on records</li>
-    </ul>
-    <p>Are you registered yet? </p>
-    <ul>
-        <li><a href="/registration_form">Register</a></li> <!-- Link to the registration form -->
-    <p>Otherwise: </p>
-        <li><a href="/login">Login</a></li> <!-- Link to the login page -->
-    </ul>
-    """
+    return render_template ('welcomePage.html')
 # Endpoint for user CREATION
-@app.route('/registration_form', methods=['POST'])
+@app.route('/registration_form', methods=['GET', 'POST'])
 def register():
-    try:
-        # Validate incoming JSON data using Pydantic model
-        registration_data = UserRegistration(**request.json)
+    if request.method == 'POST':
+        try:
+            # Validate incoming JSON data using Pydantic model
+            registration_data = UserRegistration(**request.json)
 
-        # Execute SQL query to insert user data into the database
-        cursor.execute("""
-            INSERT INTO users (fname, lname, gender, nationality, email, username, password) 
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
-        """, (
-            registration_data.fname,
-            registration_data.lname,
-            registration_data.gender,
-            registration_data.nationality,
-            registration_data.email,
-            registration_data.username,
-            registration_data.password
-        ))
-        
-        # Commit the transaction
-        conn.commit()
+            # Execute SQL query to insert user data into the database
+            cursor.execute("""
+                INSERT INTO users (fname, lname, gender, nationality, email, username, password) 
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+            """, (
+                registration_data.fname,
+                registration_data.lname,
+                registration_data.gender,
+                registration_data.nationality,
+                registration_data.email,
+                registration_data.username,
+                registration_data.password
+            ))
+            
+            # Commit the transaction
+            conn.commit()
 
-        return "User registered successfully"
-    except Exception as e:
-        # Handle database and validation errors
-        return f"Registration error: {str(e)}", 400
+            return "User registered successfully"
+        except Exception as e:
+            # Handle database and validation errors
+            return f"Registration error: {str(e)}", 400
+    else:
+        return render_template('registrationForm.html')
 
 # Endpoint for user login
-@app.route('/login', methods=['POST'])
+@app.route('/login', methods=['GET', 'POST'])
 def login():
-    data = request.json
-    username = data.get('username')
-    password = data.get('password')
+    if request.method == 'POST':
+        data = request.json
+        username = data.get('username')
+        password = data.get('password')
 
-    try:
-        # Execute SQL query to retrieve user with the provided username
-        cursor.execute("SELECT id, password FROM users WHERE username = %s", (username,))
-        user = cursor.fetchone()
+        try:
+            # Execute SQL query to retrieve user with the provided username
+            cursor.execute("SELECT id, password FROM users WHERE username = %s", (username,))
+            user = cursor.fetchone()
 
-        if user:
-            user_id, hashed_password = user['id'], user['password']
-            # Verify password
-            if hashed_password == password:
-                return jsonify({"message": "Login successful", "user_id": user_id}), 200
+            if user:
+                user_id, hashed_password = user['id'], user['password']
+                # Verify password
+                if hashed_password == password:
+                    return jsonify({"message": "Login successful", "user_id": user_id}), 200
+                else:
+                    return jsonify({"error": "Incorrect password"}), 401
             else:
-                return jsonify({"error": "Incorrect password"}), 401
-        else:
-            return jsonify({"error": "User not found"}), 404
-    except Exception as e:
-        # Handle database errors
-        return jsonify({"error": f"Database error: {str(e)}"}), 500
+                return jsonify({"error": "User not found"}), 404
+        except Exception as e:
+            # Handle database errors
+            return jsonify({"error": f"Database error: {str(e)}"}), 500
+    else:
+        return render_template('login.html')
 
     
 # Endpoint to browse all users
@@ -174,7 +164,7 @@ def browse():
     try:
         cursor.execute("""SELECT * FROM users""")
         users = cursor.fetchall()
-        return jsonify(users), 200
+        return render_template('users.html', users=users), 200
     except Exception as e:
         # If an error occurs during database query execution, return a 500 Internal Server Error response
         return f"An error occurred: {str(e)}", 500
@@ -182,16 +172,19 @@ def browse():
 # Route to search for user by ID
 @app.route('/users/<int:id>', methods=['GET'])
 def search_id(id):
-    # Execute SQL query to fetch user from database
-    with conn.cursor() as cursor:
-        cursor.execute("SELECT * FROM users WHERE id = %s", (id,))
-        user = cursor.fetchone()
+    try:
+        # Execute SQL query to fetch user from database
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT * FROM users WHERE id = %s", (id,))
+            user = cursor.fetchone()
 
-    # Check if user is found in the database
-    if user:
-        return jsonify(user), 200
-    else:
-        return jsonify({"error": "User not found"}), 404
+        # Check if user is found in the database
+        if user:
+            return render_template('userProfile.html', user=user), 200
+        else:
+            return jsonify({"error": "User not found"}), 404
+    except Exception as e:
+        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
     
 # Route to search for user by username
 @app.route('/users/<username>', methods=['GET'])
@@ -203,7 +196,7 @@ def search_username(username):
 
     # Check if user is found in the database
     if user:
-        return jsonify(user), 200
+        return render_template('userProfileByUsername.html', user=user)
     else:
         return jsonify({"error": "User not found"}), 404
 
@@ -255,46 +248,49 @@ def delete_user(username):
 def browse_records():
     try:
         cursor.execute("""SELECT * FROM records""")
-        users = cursor.fetchall()
-        return jsonify(users), 200
+        records = cursor.fetchall()
+        return render_template('allRecords.html', records=records)
     except Exception as e:
         # If an error occurs during database query execution, return a 500 Internal Server Error response
         return f"An error occurred: {str(e)}", 500
 
 # Endpoint to create a new record
-@app.route('/records/new', methods=['POST'])
+@app.route('/records/new', methods=['GET', 'POST'])
 def create_record():
-    try:
-        # Get JSON data from the request
-        data = request.json
-        # Validate incoming JSON data using Pydantic model
-        registered_record = RecordForm(**data)
+    if request.method == 'GET':
+        return render_template('newRecord.html')
+    elif request.method == 'POST':
+        try:
+            # Get JSON data from the request
+            data = request.json
+            # Validate incoming JSON data using Pydantic model
+            registered_record = RecordForm(**data)
 
-        # Execute SQL query to insert user data into the database
-        cursor.execute("""
-            INSERT INTO records (title, author, label, year, condition, cost, year_of_purchase, offers, comments, username) 
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-        """, (
-            registered_record.title,
-            registered_record.author,
-            registered_record.label,
-            registered_record.year,
-            registered_record.condition,
-            registered_record.cost,
-            registered_record.year_of_purchase,
-            registered_record.offers,
-            registered_record.comments,
-            registered_record.username
-        ))
+            # Execute SQL query to insert user data into the database
+            cursor.execute("""
+                INSERT INTO records (title, author, label, year, condition, cost, year_of_purchase, offers, comments, username) 
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, (
+                registered_record.title,
+                registered_record.author,
+                registered_record.label,
+                registered_record.year,
+                registered_record.condition,
+                registered_record.cost,
+                registered_record.year_of_purchase,
+                registered_record.offers,
+                registered_record.comments,
+                registered_record.username
+            ))
 
-        # Commit the transaction
-        conn.commit()
+            # Commit the transaction
+            conn.commit()
 
-        return "Record registered successfully"
-    except Exception as e:
-        # Rollback the transaction in case of an error
-        conn.rollback()
-        return f"Validation error: {str(e)}", 400
+            return "Record registered successfully"
+        except Exception as e:
+            # Rollback the transaction in case of an error
+            conn.rollback()
+            return f"Validation error: {str(e)}", 400
 
 # Endpoint to search records by title
 @app.route('/records/<title>', methods=['GET'])
