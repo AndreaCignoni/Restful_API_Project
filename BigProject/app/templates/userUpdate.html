@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Update User Profile</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
+</head>
+<body>
+    <h1>Update User Profile</h1>
+    <form id="updateForm">
+        <!-- Input fields for updating user details -->
+    </form>
+    
+    <div id="message" style="display: none;"></div>
+
+    <script>
+        // Function to get the user ID from the URL query string
+        function getUserIdFromUrl() {
+            var urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get('id');
+        }
+
+        // Function to update profile
+        function updateProfile() {
+            var userId = getUserIdFromUrl();
+            var data = {
+                // Your data here
+            };
+
+            $.ajax({
+                url: '/users/' + userId + '/profile/update',
+                type: 'PUT',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function(response) {
+                    document.getElementById('updateForm').reset();
+                    document.getElementById('message').innerHTML = 'User profile updated successfully.';
+                    document.getElementById('message').style.display = 'block';
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error updating user profile: ' + error);
+                    document.getElementById('message').innerHTML = 'Error updating user profile.';
+                    document.getElementById('message').style.display = 'block';
+                }
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Delete User Profile</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
+</head>
+<body>
+    <h1>Delete User Profile</h1>
+    <p>Are you sure you want to delete this user profile?</p>
+    
+    <button id="deleteButton">Delete</button>
+    
+    <div id="message" style="display: none;"></div>
+
+    <script>
+        // Function to get the user ID from the URL query string
+        function getUserIdFromUrl() {
+            var urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get('id');
+        }
+
+        // Function to delete user profile
+        function deleteUser() {
+            var userId = getUserIdFromUrl();
+
+            $.ajax({
+                url: '/users/' + userId + '/profile/delete',
+                type: 'DELETE',
+                success: function(response) {
+                    document.getElementById('message').innerHTML = 'User profile deleted successfully.';
+                    document.getElementById('message').style.display = 'block';
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error deleting user profile: ' + error);
+                    document.getElementById('message').innerHTML = 'Error deleting user profile.';
+                    document.getElementById('message').style.display = 'block';
+                }
+            });
+        }
+
+        // Attach click event listener to the delete button
+        document.getElementById('deleteButton').addEventListener('click', function() {
+            if (confirm('Are you sure you want to delete this user profile?')) {
+                deleteUser();
+            }
+        });
+    </script>
+</body>
+</html>

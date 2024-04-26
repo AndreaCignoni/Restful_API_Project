@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Record Profile</title>
+    <!-- Add any CSS stylesheets or other meta tags here -->
+</head>
+<body>
+    <h1>Record Profile</h1>
+    <div id="recordProfile">
+        <!-- Record details will be populated here -->
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchRecord();
+        });
+
+        async function fetchRecord() {
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const recordId = urlParams.get('record_id');
+                const response = await fetch(`/records/${recordId}`);
+                const record = await response.json();
+
+                if (response.ok) {
+                    displayRecord(record);
+                } else {
+                    console.error('Failed to fetch record:', record.error);
+                }
+            } catch (error) {
+                console.error('Fetch record error:', error.message);
+            }
+        }
+
+        function displayRecord(record) {
+            const recordProfile = document.getElementById('recordProfile');
+            const recordDetails = document.createElement('div');
+            recordDetails.innerHTML = `
+                <p>ID: ${record.id}</p>
+                <p>Title: ${record.title}</p>
+                <p>Author: ${record.author}</p>
+                <p>Label: ${record.label}</p>
+                <p>Year: ${record.year}</p>
+                <p>Condition: ${record.condition}</p>
+                <p>Cost: ${record.cost}</p>
+                <p>Year of Purchase: ${record.year_of_purchase}</p>
+                <p>Offers: ${record.offers}</p>
+                <p>Comments: ${record.comments}</p>
+                <p>Username: ${record.username}</p>
+            `;
+            recordProfile.appendChild(recordDetails);
+        }
+    </script>
+</body>
+</html>

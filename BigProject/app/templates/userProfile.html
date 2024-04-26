@@ -3,62 +3,96 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Profile</title>
+    <title>Record Profile</title>
+    <!-- Add any CSS stylesheets or other meta tags here -->
 </head>
 <body>
-    <h1>User Profile</h1>
-    <table>
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>First Name</th>
-                <th>Last Name</th>
-                <th>Gender</th>
-                <th>Nationality</th>
-                <th>Email</th>
-                <th>Username</th>
-            </tr>
-        </thead>
-        <tbody id="userProfile">
-            <!-- User data will be populated here dynamically -->
-        </tbody>
-    </table>
+    <h1>Record Profile</h1>
+    <div id="recordProfile">
+        <!-- Record details will be populated here -->
+    </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            fetchUser();
-
-            async function fetchUser() {
-                try {
-                    const userId = window.location.pathname.split('/').pop();
-                    const response = await fetch(`/users/${userId}`);
-                    const user = await response.json();
-
-                    if (response.ok) {
-                        displayUser(user);
-                    } else {
-                        console.error('Failed to fetch user:', user.error);
-                    }
-                } catch (error) {
-                    console.error('Fetch user error:', error.message);
-                }
-            }
-
-            function displayUser(user) {
-                const userProfile = document.getElementById('userProfile');
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${user.id}</td>
-                    <td>${user.fname}</td>
-                    <td>${user.lname}</td>
-                    <td>${user.gender}</td>
-                    <td>${user.nationality}</td>
-                    <td>${user.email}</td>
-                    <td>${user.username}</td>
-                `;
-                userProfile.appendChild(row);
-            }
+            fetchCurrentUser();
+            fetchRecord();
         });
+
+        async function fetchCurrentUser() {
+            try {
+                const response = await fetch('/current-user');
+                const currentUser = await response.json();
+
+                if (response.ok) {
+                    displayRecord(currentUser.username);
+                } else {
+                    console.error('Failed to fetch current user:', currentUser.error);
+                }
+            } catch (error) {
+                console.error('Fetch current user error:', error.message);
+            }
+        }
+
+        async function fetchRecord() {
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const recordId = urlParams.get('record_id');
+                const response = await fetch(`/records/${recordId}`);
+                const record = await response.json();
+
+                if (response.ok) {
+                    displayRecord(record, currentUser.username);
+                } else {
+                    console.error('Failed to fetch record:', record.error);
+                }
+            } catch (error) {
+                console.error('Fetch record error:', error.message);
+            }
+        }
+
+        function displayRecord(record, currentUser) {
+            const recordProfile = document.getElementById('recordProfile');
+            const recordDetails = document.createElement('div');
+
+            if (record.username === currentUser) {
+                recordDetails.innerHTML = `
+                    <p>ID: ${record.id}</p>
+                    <p>Title: ${record.title}</p>
+                    <p>Author: ${record.author}</p>
+                    <p>Label: ${record.label}</p>
+                    <p>Year: ${record.year}</p>
+                    <p>Condition: ${record.condition}</p>
+                    <p>Cost: ${record.cost}</p>
+                    <p>Year of Purchase: ${record.year_of_purchase}</p>
+                    <button onclick="updateRecord(${record.id})">Update</button>
+                    <button onclick="deleteRecord(${record.id})">Delete</button>
+                `;
+            } else {
+                recordDetails.innerHTML = `
+                    <p>ID: ${record.id}</p>
+                    <p>Title: ${record.title}</p>
+                    <p>Author: ${record.author}</p>
+                    <p>Label: ${record.label}</p>
+                    <p>Year: ${record.year}</p>
+                    <p>Condition: ${record.condition}</p>
+                    <p>Cost: ${record.cost}</p>
+                    <p>Year of Purchase: ${record.year_of_purchase}</p>
+                    <p>Offers: [Placeholder for offers]</p>
+                    <p>Comments: [Placeholder for comments]</p>
+                    <p>Username: ${record.username}</p>
+                `;
+            }
+
+            recordProfile.appendChild(recordDetails);
+        }
+
+        function updateRecord(recordId) {
+            window.location.href = `/records/${recordId}/update`;
+        }
+
+        function deleteRecord(recordId) {
+            window.location.href = `/records/${recordId}/delete`;
+        }
     </script>
 </body>
 </html>

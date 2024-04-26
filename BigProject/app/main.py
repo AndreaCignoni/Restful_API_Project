@@ -103,7 +103,7 @@ def register():
     if request.method == 'POST':
         try:
             # Validate incoming JSON data using Pydantic model
-            registration_data = UserRegistration(**request.json)
+            registration_data = UserRegistration(request.json)
 
             # Execute SQL query to insert user data into the database
             cursor.execute("""
@@ -169,11 +169,13 @@ def browse():
         # If an error occurs during database query execution, return a 500 Internal Server Error response
         return f"An error occurred: {str(e)}", 500
     
+from flask import jsonify, render_template
+
 # Route to search for user by ID
-@app.route('/users/<int:id>', methods=['GET'])
+@app.route('/users/<int:id>/profile', methods=['GET'])
 def search_id(id):
     try:
-        # Execute SQL query to fetch user from database
+        # Execute SQL query to fetch user from database using parameterized query
         with conn.cursor() as cursor:
             cursor.execute("SELECT * FROM users WHERE id = %s", (id,))
             user = cursor.fetchone()
@@ -187,61 +189,75 @@ def search_id(id):
         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
     
 # Route to search for user by username
-@app.route('/users/<username>', methods=['GET'])
+@app.route('/users/<username>/profile', methods=['GET'])
 def search_username(username):
-    # Execute SQL query to fetch user from database
-    with conn.cursor() as cursor:
-        cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
-        user = cursor.fetchone()
-
-    # Check if user is found in the database
-    if user:
-        return render_template('userProfileByUsername.html', user=user)
-    else:
-        return jsonify({"error": "User not found"}), 404
-
-# To UPDATE a user's details
-@app.route('/users/<username>', methods=['PUT'])
-def update_user(username):
     try:
-        data = request.json
-        cursor.execute("""
-        UPDATE users
-        SET fname = %s, lname = %s, gender = %s, nationality = %s, email = %s, username = %s, password = %s
-        WHERE username = %s
-        """, (
-            data.get('fname'),
-            data.get('lname'),
-            data.get('gender'),
-            data.get('nationality'),
-            data.get('email'),
-            data.get('username'),
-            data.get('password'),
-            username
-        ))
-        conn.commit()
+        # Execute SQL query to fetch user from database using parameterized query
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
+            user = cursor.fetchone()
 
-        if cursor.rowcount > 0:
-            return jsonify({"message": "User profile updated successfully"}), 200
+        # Check if user is found in the database
+        if user:
+            return render_template('userProfile.html', user=user), 200
         else:
             return jsonify({"error": "User not found"}), 404
     except Exception as e:
         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
 
-#Route to DELETE a user profile   
-@app.route('/users/<username>', methods=['DELETE'])
-def delete_user(username):
+# Enpoint to update user by ID
+from flask import render_template
+
+@app.route('/users/<int:id>/profile/update', methods=['GET', 'PUT', ])
+def update_user(id):
+    try:
+        data = request.json
+        # Retrieve username based on id
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT username FROM users WHERE id = %s", (id,))
+            username = cursor.fetchone()[0]  # Assuming username is the first column in the result
+            cursor.execute("""
+            UPDATE users
+            SET fname = %s, lname = %s, gender = %s, nationality = %s, email = %s, username = %s, password = %s
+            WHERE id = %s
+            """, (
+                data.get('fname'),
+                data.get('lname'),
+                data.get('gender'),
+                data.get('nationality'),
+                data.get('email'),
+                data.get('username'),
+                data.get('password'),
+                id
+            ))
+            conn.commit()
+
+        if cursor.rowcount > 0:
+            # Render the userUpdate.html template with a success message
+            return render_template('userUpdate.html', message="User profile updated successfully"), 200
+        else:
+            # Render the userUpdate.html template with an error message
+            return render_template('userUpdate.html', error="User not found"), 404
+    except Exception as e:
+        # Render the userUpdate.html template with an error message
+        return render_template('userUpdate.html', error=f"An error occurred: {str(e)}"), 500
+
+# Route to delete a user profile
+@app.route('/users/<int:id>/profile/delete', methods=['GET','DELETE'])
+def delete_user(id):
     try:
         # Attempt to delete the user
         with conn.cursor() as cursor:
-            cursor.execute("DELETE FROM users WHERE username = %s", (username,))
+            cursor.execute("DELETE FROM users WHERE id = %s", (id,))
             if cursor.rowcount > 0:
-                return jsonify({"message": "User deleted successfully"}), 200
+                # Render the userDelete.html template with a success message
+                return render_template('userDelete.html', message="User deleted successfully"), 200
             else:
-                return jsonify({"error": "User not found"}), 404
-    except psycopg2.errors.ForeignKeyViolation as e:
-        # Handle foreign key violation error
-        return jsonify({"error": "User cannot be deleted until all listings are deleted"}), 409
+                # Render the userDelete.html template with an error message
+                return render_template('userDelete.html', error="User not found"), 404
+    except Exception as e:
+        # Render the userDelete.html template with an error message
+        return render_template('userDelete.html', error=f"An error occurred: {str(e)}"), 500
     
 # Endpoint to browse all records
 @app.route('/records', methods=['GET'])
@@ -295,44 +311,50 @@ def create_record():
 # Endpoint to search records by title
 @app.route('/records/<title>', methods=['GET'])
 def search_record(title):
-    # Execute SQL query to fetch records with the same title from database
+    # Execute SQL query to fetch records with the same title from the database
     with conn.cursor() as cursor:
         cursor.execute("SELECT * FROM records WHERE title = %s", (title,))
-        records = cursor.fetchall()
+        record = cursor.fetchone()  # Assuming there's only one record with the given title
 
-    # Check if any records are found in the database
-    if records:
-        # If records are found, return them as JSON response
-        return jsonify(records), 200
+    # Check if any record is found in the database
+    if record:
+        # If a record is found, render the recordProfile.html template with the record data
+        return render_template('recordProfile.html', record=record)
     else:
-        # If no records are found, return error message
+        # If no record is found, return error message
         return jsonify({"error": "Record not found"}), 404
     
 # Endpoint to search records by ID
 @app.route('/records/<int:record_id>', methods=['GET'])
 def search_recordID(record_id):
-    # Execute SQL query to fetch records with the same title from database
+    # Execute SQL query to fetch the record with the given record_id from the database
     with conn.cursor() as cursor:
         cursor.execute("SELECT * FROM records WHERE record_id = %s", (record_id,))
-        records = cursor.fetchall()
+        record = cursor.fetchone()
 
-    # Check if any records are found in the database
-    if records:
-        # If records are found, return them as JSON response
-        return jsonify(records), 200
+    # Check if any record is found in the database
+    if record:
+        # If a record is found, render the recordProfile.html template with the record data
+        return render_template('recordProfile.html', record=record)
     else:
-        # If no records are found, return error message
+        # If no record is found, return error message
         return jsonify({"error": "Record not found"}), 404
     
 # Endpoint to update a record's detail
-@app.route('/records/<title>', methods=['PUT'])
-def update_record(title):
+from flask import render_template
+
+@app.route('/records/<int:id>/update', methods=['PUT', 'GET'])
+def update_record(record_id):
+    if request.method == 'GET':
+        # Render the recordUpdate.html template for GET requests
+        return render_template('recordUpdate.html')
+
     try:
         data = request.json
         cursor.execute("""
         UPDATE records
-        SET title = %s, author = %s, label = %s, year = %s, condition = %s, cost = %s, year_of_purchase = %s, comments =%s
-        WHERE title = %s
+        SET title = %s, author = %s, label = %s, year = %s, condition = %s, cost = %s, year_of_purchase = %s, comments = %s
+        WHERE record_id = %s
         """, (
             data.get('title'),
             data.get('author'),
@@ -342,7 +364,7 @@ def update_record(title):
             data.get('cost'),
             data.get('year_of_purchase'),
             data.get('comments'),
-            title
+            record_id
         ))
         conn.commit()
 
@@ -354,7 +376,7 @@ def update_record(title):
         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
     
 # Endpoint to DELETE a uregistered record
-@app.route('/records/<title>', methods=['DELETE'])
+@app.route('/records/<title>/delete', methods=['DELETE'])
 def delete_record(title):
     try:
         # Attempt to delete a record
