@@ -11,6 +11,7 @@
 # The API endpoints are designed following RESTful principles, with each endpoint corresponding to a specific resource and operation. 
 
 # Author: Andrea Cignoni
+
 import json
 from flask import Flask, request, jsonify, make_response, render_template
 from pydantic import BaseModel
@@ -168,8 +169,6 @@ def browse():
     except Exception as e:
         # If an error occurs during database query execution, return a 500 Internal Server Error response
         return f"An error occurred: {str(e)}", 500
-    
-from flask import jsonify, render_template
 
 # Route to search for user by ID
 @app.route('/users/<int:id>/profile', methods=['GET'])
@@ -206,8 +205,6 @@ def search_username(username):
         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
 
 # Enpoint to update user by ID
-from flask import render_template
-
 @app.route('/users/<int:id>/profile/update', methods=['GET', 'PUT', ])
 def update_user(id):
     try:
@@ -341,8 +338,6 @@ def search_recordID(record_id):
         return jsonify({"error": "Record not found"}), 404
     
 # Endpoint to update a record's detail
-from flask import render_template
-
 @app.route('/records/<int:id>/update', methods=['PUT', 'GET'])
 def update_record(record_id):
     if request.method == 'GET':
@@ -375,7 +370,7 @@ def update_record(record_id):
     except Exception as e:
         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
     
-# Endpoint to DELETE a uregistered record
+# Endpoint to DELETE a registered record
 @app.route('/records/<title>/delete', methods=['DELETE'])
 def delete_record(title):
     try:
