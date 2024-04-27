@@ -21,7 +21,7 @@ from psycopg2.extras import RealDictCursor
 from configDB  import DATABASE_CONFIG
 import time
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='templates')
 
 # Postgre VynilRecordCollectorAPI database connection
 while True:
@@ -378,11 +378,14 @@ def delete_record(title):
         with conn.cursor() as cursor:
             cursor.execute("DELETE FROM records WHERE title = %s", (title,))
             if cursor.rowcount > 0:
-                return jsonify({"message": "Record deleted successfully"}), 200
+     # Render the recordDelete.html template with a success message
+                return render_template('recordDelete.html', message="Record deleted successfully"), 200
             else:
-                return jsonify({"error": "Record not found"}), 404
+                # Render the recordDelete.html template with an error message
+                return render_template('recordDelete.html', error="Record not found"), 404
     except Exception as e:
-        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+        # Render the recordDelete.html template with an error message
+        return render_template('recordDelete.html', error=f"An error occurred: {str(e)}"), 500
     
 if __name__ == '__main__':
     app.run(debug=True)
