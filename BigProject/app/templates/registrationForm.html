@@ -8,13 +8,13 @@
 <body>
     <form id="registrationForm">
         <!-- Your registration form inputs here -->
-        <input type="text" name="fname" placeholder="First Name">
-        <input type="text" name="lname" placeholder="Last Name">
-        <input type="text" name="gender" placeholder="Gender">
-        <input type="text" name="nationality" placeholder="Nationality">
-        <input type="email" name="email" placeholder="Email">
-        <input type="text" name="username" placeholder="Username">
-        <input type="password" name="password" placeholder="Password">
+        <input type="text" name="fname" placeholder="First Name" required>
+        <input type="text" name="lname" placeholder="Last Name" required>
+        <input type="text" name="gender" placeholder="Gender" required>
+        <input type="text" name="nationality" placeholder="Nationality" required>
+        <input type="email" name="email" placeholder="Email" required>
+        <input type="text" name="username" placeholder="Username" required>
+        <input type="password" name="password" placeholder="Password" required>
         <button type="submit" class="btn btn-secondary">Submit</button>
     </form>
 
@@ -34,7 +34,7 @@
                     const response = await fetch('/registration_form', {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded' // Set content type to URL-encoded
+                            'Content-Type': 'application/json'
                         },
                         body: formData // Pass URL-encoded form data
                     });
@@ -45,7 +45,6 @@
 
                     const result = await response.text();
                     console.log(result); // Log success message
-                    // You can handle success here, like redirecting the user or showing a success message
 
                 } catch (error) {
                     console.error('Error registering user:', error.message);

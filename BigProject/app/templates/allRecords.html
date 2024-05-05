@@ -10,63 +10,36 @@
     <table>
         <thead>
             <tr>
-                <th>ID</th>
-                <th>Title</th>
-                <th>Author</th>
-                <th>Label</th>
-                <th>Year</th>
-                <th>Condition</th>
-                <th>Year of Purchase</th>
-                <th>Offers</th>
-                <th>Comments</th>
-                <th>Username</th>
+                <th>record_id</th>
+                <th>title</th>
+                <th>author</th>
+                <th>label</th>
+                <th>year</th>
+                <th>condition</th>
+                <th>cost</th>
+                <th>year_of_purchase</th>
+                <th>offers</th>
+                <th>comments</th>
+                <th>userid</th>
             </tr>
         </thead>
-        <tbody id="recordsList">
-            <!-- Record data will be populated here dynamically -->
+        <tbody>
+            {% for record in records %}
+            <tr>
+                <td>{{ record['record_id'] }}</td>
+                <td>{{ record['title'] }}</td>
+                <td>{{ record['author'] }}</td>
+                <td>{{ record['label']}}</td>
+                <td>{{ record['year']}}</td>
+                <td>{{ record['condition']}}</td>
+                <td>{{ record['cost']}}</td>
+                <td>{{ record['year_of_purchase']}}</td>
+                <td>{{ record['offers']}}</td>
+                <td>{{ record['comments']}}</td>
+                <td>{{ record['username']}}</td>
+            </tr>
+            {% endfor %}
         </tbody>
     </table>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            fetchRecords();
-
-            async function fetchRecords() {
-                try {
-                    const response = await fetch('/records');
-                    const records = await response.json();
-
-                    if (response.ok) {
-                        displayRecords(records);
-                    } else {
-                        console.error('Failed to fetch records:', records.error);
-                    }
-                } catch (error) {
-                    console.error('Fetch records error:', error.message);
-                }
-            }
-
-            function displayRecords(records) {
-                const recordsList = document.getElementById('recordsList');
-
-                records.forEach(record => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${record.id}</td>
-                        <td>${record.title}</td>
-                        <td>${record.author}</td>
-                        <td>${record.label}</td>
-                        <td>${record.year}</td>
-                        <td>${record.condition}</td>
-                        <td>${record.year_of_purchase}</td>
-                        <td>${record.offers}</td>
-                        <td>${record.comments}</td>
-                        <td>${record.username}</td>
-                    `;
-                    recordsList.appendChild(row);
-                });
-            }
-        });
-    </script>
 </body>
 </html>

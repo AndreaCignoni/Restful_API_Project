@@ -204,57 +204,69 @@ def search_username(username):
     except Exception as e:
         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
 
-# Enpoint to update user by ID
-@app.route('/users/<int:id>/profile/update', methods=['GET', 'PUT', ])
+# Route to update a user profile
+@app.route('/users/<int:id>/profile/update', methods=['GET', 'PUT'])
 def update_user(id):
     try:
-        data = request.json
-        # Retrieve username based on id
-        with conn.cursor() as cursor:
-            cursor.execute("SELECT username FROM users WHERE id = %s", (id,))
-            username = cursor.fetchone()[0]  # Assuming username is the first column in the result
-            cursor.execute("""
-            UPDATE users
-            SET fname = %s, lname = %s, gender = %s, nationality = %s, email = %s, username = %s, password = %s
-            WHERE id = %s
-            """, (
-                data.get('fname'),
-                data.get('lname'),
-                data.get('gender'),
-                data.get('nationality'),
-                data.get('email'),
-                data.get('username'),
-                data.get('password'),
-                id
-            ))
-            conn.commit()
+        if request.method == 'GET':
+            # Fetch user data and render userUpdate.html template
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT * FROM users WHERE id = %s", (id,))
+                user = cursor.fetchone()
+                if user:
+                    return render_template('userUpdate.html', user=user), 200
+                else:
+                    return render_template('userUpdate.html', error='User not found'), 404
+        elif request.method == 'PUT':
+            data = request.json
+            with conn.cursor() as cursor:
+                cursor.execute("""
+                    UPDATE users
+                    SET fname = %s, lname = %s, gender = %s, nationality = %s, email = %s, username = %s, password = %s
+                    WHERE id = %s
+                """, (
+                    data.get('fname'),
+                    data.get('lname'),
+                    data.get('gender'),
+                    data.get('nationality'),
+                    data.get('email'),
+                    data.get('username'),
+                    data.get('password'),
+                    id
+                ))
+                conn.commit()
 
-        if cursor.rowcount > 0:
-            # Render the userUpdate.html template with a success message
-            return render_template('userUpdate.html', message="User profile updated successfully"), 200
-        else:
-            # Render the userUpdate.html template with an error message
-            return render_template('userUpdate.html', error="User not found"), 404
+            if cursor.rowcount > 0:
+                return jsonify({'message': 'User profile updated successfully'}), 200
+            else:
+                return jsonify({'error': 'User not found'}), 404
     except Exception as e:
-        # Render the userUpdate.html template with an error message
-        return render_template('userUpdate.html', error=f"An error occurred: {str(e)}"), 500
+        return jsonify({'error': f"An error occurred: {str(e)}"}), 500
 
 # Route to delete a user profile
-@app.route('/users/<int:id>/profile/delete', methods=['GET','DELETE'])
+@app.route('/users/<int:id>/profile/delete', methods=['GET', 'DELETE'])
 def delete_user(id):
     try:
-        # Attempt to delete the user
-        with conn.cursor() as cursor:
-            cursor.execute("DELETE FROM users WHERE id = %s", (id,))
+        if request.method == 'GET':
+            # Fetch user data and render userDelete.html template
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT * FROM users WHERE id = %s", (id,))
+                user = cursor.fetchone()
+                if user:
+                    return render_template('userDelete.html', user=user), 200
+                else:
+                    return render_template('userDelete.html', error='User not found'), 404
+        elif request.method == 'DELETE':
+            with conn.cursor() as cursor:
+                cursor.execute("DELETE FROM users WHERE id = %s", (id,))
+                conn.commit()
+
             if cursor.rowcount > 0:
-                # Render the userDelete.html template with a success message
-                return render_template('userDelete.html', message="User deleted successfully"), 200
+                return jsonify({'message': 'User deleted successfully'}), 200
             else:
-                # Render the userDelete.html template with an error message
-                return render_template('userDelete.html', error="User not found"), 404
+                return jsonify({'error': 'User not found'}), 404
     except Exception as e:
-        # Render the userDelete.html template with an error message
-        return render_template('userDelete.html', error=f"An error occurred: {str(e)}"), 500
+        return jsonify({'error': f"An error occurred: {str(e)}"}), 500
     
 # Endpoint to browse all records
 @app.route('/records', methods=['GET'])

@@ -1,48 +1,69 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Update User Profile</title>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
 </head>
 <body>
     <h1>Update User Profile</h1>
     <form id="updateForm">
-        <!-- Input fields for updating user details -->
+        <div>
+            <label for="fname">First Name:</label>
+            <input type="text" id="fname" name="fname" value="{{ user.fname }}">
+        </div>
+        <div>
+            <label for="lname">Last Name:</label>
+            <input type="text" id="lname" name="lname" value="{{ user.lname }}">
+        </div>
+        <div>
+            <label for="gender">Gender:</label>
+            <select id="gender" name="gender">
+                <option value="male" {% if user.gender == 'male' %} selected {% endif %}>Male</option>
+                <option value="female" {% if user.gender == 'female' %} selected {% endif %}>Female</option>
+                <option value="other" {% if user.gender == 'other' %} selected {% endif %}>Other</option>
+            </select>
+        </div>
+        <div>
+            <label for="nationality">Nationality:</label>
+            <input type="text" id="nationality" name="nationality" value="{{ user.nationality }}">
+        </div>
+        <div>
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" value="{{ user.email }}">
+        </div>
+        <div>
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username" value="{{ user.username }}">
+        </div>
+        <div>
+            <button type="submit">Save</button>
+        </div>
     </form>
-    
-    <div id="message" style="display: none;"></div>
 
     <script>
-        // Function to get the user ID from the URL query string
-        function getUserIdFromUrl() {
-            var urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get('id');
-        }
+        document.getElementById('updateForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            
+            const formData = new FormData(event.target);
+            const userId = formData.get('user_id');
+            
+            try {
+                const response = await fetch(`/users/${userId}/profile/update`, {
+                    method: 'PUT',
+                    body: formData
+                });
 
-        // Function to update profile
-        function updateProfile() {
-            var userId = getUserIdFromUrl();
-            var data = {
-                // Your data here
-            };
-
-            $.ajax({
-                url: '/users/' + userId + '/profile/update',
-                type: 'PUT',
-                contentType: 'application/json',
-                data: JSON.stringify(data),
-                success: function(response) {
-                    document.getElementById('updateForm').reset();
-                    document.getElementById('message').innerHTML = 'User profile updated successfully.';
-                    document.getElementById('message').style.display = 'block';
-                },
-                error: function(xhr, status, error) {
-                    console.error('Error updating user profile: ' + error);
-                    document.getElementById('message').innerHTML = 'Error updating user profile.';
-                    document.getElementById('message').style.display = 'block';
+                if (response.ok) {
+                    // Redirect to user profile page or display success message
+                    window.location.href = `/users/${userId}/profile`;
+                } else {
+                    console.error('Failed to update user profile:', response.statusText);
                 }
-            });
-        }
+            } catch (error) {
+                console.error('Update user profile error:', error.message);
+            }
+        });
     </script>
 </body>
 </html>
