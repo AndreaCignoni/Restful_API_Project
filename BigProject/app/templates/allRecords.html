@@ -3,43 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi" crossorigin="anonymous">
     <title>All Records</title>
 </head>
 <body>
-    <h1>All Records</h1>
-    <table>
-        <thead>
-            <tr>
-                <th>record_id</th>
-                <th>title</th>
-                <th>author</th>
-                <th>label</th>
-                <th>year</th>
-                <th>condition</th>
-                <th>cost</th>
-                <th>year_of_purchase</th>
-                <th>offers</th>
-                <th>comments</th>
-                <th>userid</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for record in records %}
-            <tr>
-                <td>{{ record['record_id'] }}</td>
-                <td>{{ record['title'] }}</td>
-                <td>{{ record['author'] }}</td>
-                <td>{{ record['label']}}</td>
-                <td>{{ record['year']}}</td>
-                <td>{{ record['condition']}}</td>
-                <td>{{ record['cost']}}</td>
-                <td>{{ record['year_of_purchase']}}</td>
-                <td>{{ record['offers']}}</td>
-                <td>{{ record['comments']}}</td>
-                <td>{{ record['username']}}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="container">
+        <h1>All Records</h1>
+        <!-- Create, Update, and Delete buttons -->
+        <div>
+            <button id="showCreateButton" onclick="showCreate()" class="btn btn-primary">Create Record</button>
+        </div>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>record_id</th>
+                    <th>title</th>
+                    <th>author</th>
+                    <th>label</th>
+                    <th>year</th>
+                    <th>condition</th>
+                    <th>cost</th>
+                    <th>year_of_purchase</th>
+                    <th>offers</th>
+                    <th>comments</th>
+                    <th>username</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in records %}
+                <tr>
+                    <td>{{ record['record_id'] }}</td>
+                    <td>{{ record['title'] }}</td>
+                    <td>{{ record['author'] }}</td>
+                    <td>{{ record['label'] }}</td>
+                    <td>{{ record['year'] }}</td>
+                    <td>{{ record['condition'] }}</td>
+                    <td>{{ record['cost'] }}</td>
+                    <td>{{ record['year_of_purchase'] }}</td>
+                    <td>{{ record['offers'] }}</td>
+                    <td>{{ record['comments'] }}</td>
+                    <td>{{ record['username'] }}</td>
+                    <td>
+                        <button id= 'updateRecord' onclick="updateRecord('{{ record[record_id] }}')" class="btn btn-secondary">Update</button> <!-- Update button -->
+                        <button id='deleteRecord' onclick="deleteRecord('{{ record[record_id] }}')" class="btn btn-danger">Delete</button> <!-- Delete button -->
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <!-- JavaScript function for create, update, and delete record actions -->
+    <script>
+        function showCreate() {
+            // Redirect to create record page
+            window.location.href = '/records/new';
+        }
+
+        function updateRecord(recordId) {
+            // Redirect to update record page with record ID
+            window.location.href = '/records/' + recordId + '/update';
+        }
+
+        function deleteRecord(recordId) {
+            // Send a delete request to the server
+            fetch('/records/' + recordId + '/delete', {
+                method: 'DELETE'
+            })
+            .then(response => {
+                if (response.ok) {
+                    // Reload the page to reflect changes
+                    window.location.reload();
+                } else {
+                    console.error('Failed to delete record:', response.statusText);
+                }
+            })
+            .catch(error => {
+                console.error('Delete record error:', error.message);
+            });
+        }
+    </script>
 </body>
 </html>
