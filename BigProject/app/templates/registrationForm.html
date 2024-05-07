@@ -24,53 +24,41 @@
         <!-- autocomplete="username" for username -->
         Password<br><input type="password" id="password" name="password" autocomplete="new-password" required><br>
         <!-- autocomplete="new-password" for password -->
-        <button type="submit" id="submitBtn" class="btn btn-secondary">Submit</button>
+        <button onclick="createRow()">Submit</button>
     </form>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
-        // Function to create a new user
-        function createUser(user, callback){
+        function createRow() {
+            var user = {};
+            var registration = document.getElementById("registrationForm");
+            user.fname = registration.querySelector('input[name="fname"]').value;
+            user.lname = registration.querySelector('input[name="lname"]').value;
+            user.gender = registration.querySelector('input[name="gender"]:checked').value;
+            user.nationality = registration.querySelector('input[name="nationality"]').value;
+            user.email = registration.querySelector('input[name="email"]').value;
+            user.username = registration.querySelector('input[name="username"]').value;
+            user.password = registration.querySelector('input[name="password"]').value;
+            
+            console.log("New user is " + JSON.stringify(user));
+
+            // Send user data to server
+            sendDataToServer(user);
+        }
+
+        function sendDataToServer(user) {
             $.ajax({
-                url: "/registration_form",
-                method: "POST",
+                url: '/registration_form',
+                method: 'POST',
+                contentType: 'application/json',
                 data: JSON.stringify(user),
-                contentType: "application/json; charset=utf-8",
-                success: function(result){
-                    // Handle success
-                    console.log(result);
-                    callback(result);
+                success: function(response) {
+                    console.log('User data sent successfully');
                 },
-                error: function(xhr, status, error){
-                    // Handle error
-                    console.log("Error: " + status + " Message: " + error);
+                error: function(xhr, status, error) {
+                    console.error('Failed to send user data:', status, error);
                 }
             });
         }
-    
-        $(document).ready(function() {
-            const form = document.getElementById('registrationForm');
-    
-            // Add submit event listener to registration form
-            form.addEventListener('submit', async (event) => {
-                event.preventDefault(); // Prevent default form submission
-    
-                // Serialize form data into JSON
-                const formData = {
-                    fname: form.fname.value,
-                    lname: form.lname.value,
-                    gender: form.gender.value,
-                    nationality: form.nationality.value,
-                    email: form.email.value,
-                    username: form.username.value,
-                    password: form.password.value
-                };
-    
-                // Call createUser function to create user
-                createUser(formData, function(result) {
-                    console.log(result); // Log success message or error
-                });
-            });
-        });
-    </script>       
+    </script>
 </body>
 </html>

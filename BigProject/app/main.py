@@ -104,7 +104,7 @@ def register():
     if request.method == 'POST':
         try:
             # Validate incoming JSON data using Pydantic model
-            registration_data = UserRegistration(request.json)
+            registration_data = UserRegistration(**request.json)
 
             # Execute SQL query to insert user data into the database
             cursor.execute("""
@@ -312,10 +312,14 @@ def create_record():
             conn.commit()
 
             return "Record registered successfully"
-        except Exception as e:
-            # Rollback the transaction in case of an error
+        except ValueError as ve:
+            # Rollback the transaction in case of a validation error
             conn.rollback()
-            return f"Validation error: {str(e)}", 400
+            return f"Validation error: {str(ve)}", 400
+        except Exception as e:
+            # Rollback the transaction in case of any other error
+            conn.rollback()
+            return f"Error: {str(e)}", 500
 
 # Endpoint to search records by title
 @app.route('/records/<title>', methods=['GET'])

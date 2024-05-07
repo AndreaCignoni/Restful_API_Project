@@ -7,66 +7,56 @@
     <title>New Record</title>
 </head>
 <body>
-    <h1>New Record</h1>
-    <form id="recordForm">
-        <label for="title">Title:</label>
-        <input type="text" id="title" name="title" required><br>
-        <label for="author">Author:</label>
-        <input type="text" id="author" name="author" required><br>
-        <label for="label">Label:</label>
-        <input type="text" id="label" name="label"><br>
-        <label for="year">Year:</label>
-        <input type="number" id="year" name="year" required><br>
-        <label for="condition">Condition:</label>
-        <input type="text" id="condition" name="condition"><br>
-        <label for="cost">Cost:</label>
-        <input type="number" id="cost" name="cost" required><br>
-        <label for="year_of_purchase">Year of Purchase:</label>
-        <input type="number" id="year_of_purchase" name="year_of_purchase" required><br>
-        <label for="offers">Offers:</label>
-        <input type="text" id="offers" name="offers"><br>
-        <label for="comments">Comments:</label><br>
-        <textarea id="comments" name="comments"></textarea><br>
-        <label for="username">Username:</label>
-        <input type="text" id="username" name="username" required><br>
-        <button type="submit" id="submitBtn" class="btn btn-secondary">Submit</button>
+    <form id="recordForm">       
+        Title<br><input type="text" id="title" name="title" autocomplete="title"required><br>
+        Author<br><input type="text" id="author" name="author" autocomplete="author"required><br>
+        Label<br><input type="text" id="label" name="label" autocomplete="label"><br>
+        Year<br><input type="number" id="year" name="year" autocomplete="year"required><br>
+        Condition<br><input type="text" id="condition" name="condition" autocomplete="condition"required><br>
+        Cost<br><input type="number" id="cost" name="cost" autocomplete="cost" required><br>
+        Year Of Purchase<br><input type="number" id="year_of_purchase" name="year_of_purchase" autocomplete="year_of_purchase"required><br>
+        Offers<br><input type="number" id="offers" name="offers"><br>
+        Comments:<textarea id="comments" name="comments"></textarea><br>
+        Username<input type="text" id="username" name="username" autocomplete="username"required><br>
+        <button type="button" onclick="createRow()">Submit</button>
     </form>
-
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const recordForm = document.getElementById('recordForm');
+        function createRow() {
+            var record = {};
+            var newRecord = document.getElementById("recordForm");
+            record.title = newRecord.querySelector('input[name="title"]').value;
+            record.author = newRecord.querySelector('input[name="author"]').value;
+            record.label = newRecord.querySelector('input[name="label"]').value;
+            record.year = newRecord.querySelector('input[name="year"]').value;
+            record.condition = newRecord.querySelector('input[name="condition"]').value;
+            record.cost = newRecord.querySelector('input[name="cost"]').value;
+            record.year_of_purchase = newRecord.querySelector('input[name="year_of_purchase"]').value;
+            record.offers = newRecord.querySelector('input[name="offers"]').value;
+            record.comments = newRecord.querySelector('textarea[name="comments"]').value;
+            record.username = newRecord.querySelector('input[name="username"]').value;
 
-            recordForm.addEventListener('submit', async (event) => {
-                event.preventDefault();
+            console.log("New record is " + JSON.stringify(record));
 
-                const formData = new FormData(recordForm);
-                const jsonData = {};
-                formData.forEach((value, key) => {
-                    jsonData[key] = value;
-                });
+            // Send record data to server
+            sendDataToServer(record);
+        }
 
-                try {
-                    const response = await fetch('/records/new', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(jsonData)
-                    });
-
-                    if (response.ok) {
-                        alert('Record created successfully');
-                        recordForm.reset();
-                    } else {
-                        const errorMessage = await response.text();
-                        alert(`Error: ${errorMessage}`);
-                    }
-                } catch (error) {
-                    console.error('Create record error:', error.message);
-                    alert('Error creating record. Please try again.');
+        function sendDataToServer(record) {
+            $.ajax({
+                url: '/records/new', // Make sure this URL matches your server endpoint
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(record),
+                success: function(response) {
+                    console.log('Record successfully created');
+                },
+                error: function(xhr, status, error) {
+                    console.error('Failed to create new record:', status, error);
+                    console.error(xhr.responseText); // Log server response for more details
                 }
             });
-        });
+        }
     </script>
 </body>
 </html>
