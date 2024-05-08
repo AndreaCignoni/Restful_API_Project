@@ -346,39 +346,43 @@ def search_recordID(record_id):
         # If no record is found, return error message
         return jsonify({"error": "Record not found"}), 404
     
-# Endpoint to update a record's detail
-@app.route('/records/<int:id>/update', methods=['PUT', 'GET'])
+# Endpoint to update a record's details
+@app.route('/records/<int:record_id>/update', methods=['PUT', 'GET'])
 def update_record(record_id):
-    if request.method == 'GET':
-        # Render the recordUpdate.html template for GET requests
-        return render_template('recordUpdate.html')
-
     try:
-        data = request.json
-        cursor.execute("""
-        UPDATE records
-        SET title = %s, author = %s, label = %s, year = %s, condition = %s, cost = %s, year_of_purchase = %s, comments = %s
-        WHERE record_id = %s
-        """, (
-            data.get('title'),
-            data.get('author'),
-            data.get('label'),
-            data.get('year'),
-            data.get('condition'),
-            data.get('cost'),
-            data.get('year_of_purchase'),
-            data.get('comments'),
-            record_id
-        ))
-        conn.commit()
-
-        if cursor.rowcount > 0:
-            return jsonify({"message": "Record form updated successfully"}), 200
-        else:
-            return jsonify({"error": "Record not found"}), 404
+        if request.method == 'GET':
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT * FROM records WHERE record_id = %s", (record_id,))
+                record = cursor.fetchone()
+                if record:
+                    return render_template('recordUpdate.html', record=record), 200
+                else:
+                    return render_template('recordUpdate.html', error='Record not found'), 404
+        elif request.method == 'PUT':
+            data = request.json
+            cursor.execute("""
+            UPDATE records
+            SET title = %s, author = %s, label = %s, year = %s, condition = %s, cost = %s, year_of_purchase = %s, comments = %s
+            WHERE record_id = %s
+            """, (
+                data.get('title'),
+                data.get('author'),
+                data.get('label'),
+                data.get('year'),
+                data.get('condition'),
+                data.get('cost'),
+                data.get('year_of_purchase'),
+                data.get('comments'),
+                record_id
+            ))
+            conn.commit()
+            if cursor.rowcount > 0:
+                return jsonify({"message": "Record form updated successfully"}), 200
+            else:
+                return jsonify({"error": "Record not found"}), 404
     except Exception as e:
-        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
-    
+        return jsonify({'error': f"An error occurred: {str(e)}"}), 500
+
 # Endpoint to DELETE a registered record
 @app.route('/records/<title>/delete', methods=['DELETE'])
 def delete_record(title):

@@ -4,81 +4,79 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi" crossorigin="anonymous">
-    <title>Update User Profile</title>
+    <title>Update Record Info</title>
 </head>
 <body>
-    <h1>Update User Profile</h1>
+    <h1>Update Record Info</h1>
     <form id="updateForm">
-        <div>
-            <label for="fname">First Name:</label>
-            <input type="text" id="fname" name="fname" value="{{ user.fname }}">
-        </div>
-        <div>
-            <label for="lname">Last Name:</label>
-            <input type="text" id="lname" name="lname" value="{{ user.lname }}">
-        </div>
-        <div>
-            <label for="gender">Gender:</label>
-            <select id="gender" name="gender">
-                <option value="male" {% if user.gender == 'male' %} selected {% endif %}>Male</option>
-                <option value="female" {% if user.gender == 'female' %} selected {% endif %}>Female</option>
-                <option value="other" {% if user.gender == 'other' %} selected {% endif %}>Other</option>
-            </select>
-        </div>
-        <div>
-            <label for="nationality">Nationality:</label>
-            <input type="text" id="nationality" name="nationality" value="{{ user.nationality }}">
-        </div>
-        <div>
-            <label for="email">Email:</label>
-            <input type="email" id="email" name="email" value="{{ user.email }}">
-        </div>
-        <div>
-            <label for="username">Username:</label>
-            <input type="text" id="username" name="username" value="{{ user.username }}">
-        </div>
-        <div>
-            <button type="submit">Save</button>
-        </div>
+        Title<br><input type="text" id="title" name="title" autocomplete="title" required><br>
+        Author<br><input type="text" id="author" name="author" autocomplete="author" required><br>
+        Label<br><input type="text" id="label" name="label" autocomplete="label"><br>
+        Year<br><input type="number" id="year" name="year" autocomplete="year" required><br>
+        Condition<br><input type="text" id="condition" name="condition" autocomplete="condition" required><br>
+        Cost<br><input type="number" id="cost" name="cost" autocomplete="cost" required><br>
+        Year Of Purchase<br><input type="number" id="year_of_purchase" name="year_of_purchase" autocomplete="year_of_purchase" required><br>
+        Offers<br><input type="text" id="offers" name="offers"><br>
+        Comments:<textarea id="comments" name="comments"></textarea><br>
+        Username<input type="text" id="username" name="username" autocomplete="username" required><br>
+        <button type="submit">Save</button>
     </form>
 
+    <div id="message" style="display:none;"></div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
-        // Function to get the user ID from the URL query string
-        function getUserIdFromUrl() {
+        // Function to get the record ID from the URL query string
+        function getRecordIdFromUrl() {
             var urlParams = new URLSearchParams(window.location.search);
-            var userId = urlParams.get('id');
-            if (!userId) {
-                console.error('User ID not found in URL');
+            var recordId = urlParams.get('id');
+            if (!recordId) {
+                console.error('Record ID not found in URL');
             }
-            return userId;
+            return recordId;
         }
     
-        // Function to update profile
-        function updateProfile() {
-            var userId = getUserIdFromUrl();
-            if (!userId) return; // Exit if user ID is not found
+        // Function to update record
+        function updateRecord() {
+            var recordId = getRecordIdFromUrl();
+            if (!recordId) return; // Exit if record ID is not found
     
-            var data = {
-                // Your data here
-            };
-    
+            var record = {};
+            var updatedRecord = document.getElementById("updateForm");
+            record.title = updatedRecord.querySelector('input[name="title"]').value;
+            record.author = updatedRecord.querySelector('input[name="author"]').value;
+            record.label = updatedRecord.querySelector('input[name="label"]').value;
+            record.year = updatedRecord.querySelector('input[name="year"]').value;
+            record.condition = updatedRecord.querySelector('input[name="condition"]').value;
+            record.cost = updatedRecord.querySelector('input[name="cost"]').value;
+            record.year_of_purchase = updatedRecord.querySelector('input[name="year_of_purchase"]').value;
+            record.offers = updatedRecord.querySelector('input[name="offers"]').value.split(',').map(Number); // Convert to array of numbers
+            record.comments = updatedRecord.querySelector('textarea[name="comments"]').value.split(','); // Convert to array of strings
+            record.username = updatedRecord.querySelector('input[name="username"]').value;
+
             $.ajax({
-                url: '/users/' + userId + '/profile/update',
+                url: '/records/' + recordId + '/update',
                 type: 'PUT',
                 contentType: 'application/json',
-                data: JSON.stringify(data),
+                data: JSON.stringify(record),
                 success: function(response) {
                     document.getElementById('updateForm').reset();
-                    document.getElementById('message').innerHTML = 'User profile updated successfully.';
+                    document.getElementById('message').innerHTML = 'Record updated successfully.';
                     document.getElementById('message').style.display = 'block';
                 },
                 error: function(xhr, status, error) {
-                    console.error('Error updating user profile: ' + error);
-                    document.getElementById('message').innerHTML = 'Error updating user profile.';
+                    console.error('Error updating record: ' + error);
+                    document.getElementById('message').innerHTML = 'Error updating record profile.';
                     document.getElementById('message').style.display = 'block';
                 }
             });
         }
-    </script>    
+        
+        // Submit form on button click
+        $(document).on("submit", "#updateForm", function(event){
+            event.preventDefault();
+            updateRecord();
+        });
+    </script>
 </body>
 </html>

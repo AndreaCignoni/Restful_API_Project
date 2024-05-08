@@ -45,8 +45,8 @@
                     <td>{{ record['comments'] }}</td>
                     <td>{{ record['username'] }}</td>
                     <td>
-                        <button id= 'updateRecord' onclick="updateRecord('{{ record[record_id] }}')" class="btn btn-secondary">Update</button> <!-- Update button -->
-                        <button id='deleteRecord' onclick="deleteRecord('{{ record[record_id] }}')" class="btn btn-danger">Delete</button> <!-- Delete button -->
+                        <button class="updateRecord btn btn-secondary" onclick="updateRecord('{{record.record_id}}')">Update</button>
+                        <button class="deleteRecord btn btn-danger" onclick="deleteRecord('{{record.record_id}}')">Delete</button>
                     </td>
                 </tr>
                 {% endfor %}
@@ -60,8 +60,9 @@
             window.location.href = '/records/new';
         }
 
+        // Other functions for update and delete actions
         function updateRecord(recordId) {
-            // Redirect to update record page with record ID
+            // Redirect to update page with record ID
             window.location.href = '/records/' + recordId + '/update';
         }
 
