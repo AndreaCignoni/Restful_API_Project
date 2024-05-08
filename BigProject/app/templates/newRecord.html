@@ -8,16 +8,16 @@
 </head>
 <body>
     <form id="recordForm">       
-        Title<br><input type="text" id="title" name="title" autocomplete="title"required><br>
-        Author<br><input type="text" id="author" name="author" autocomplete="author"required><br>
+        Title<br><input type="text" id="title" name="title" autocomplete="title" required><br>
+        Author<br><input type="text" id="author" name="author" autocomplete="author" required><br>
         Label<br><input type="text" id="label" name="label" autocomplete="label"><br>
-        Year<br><input type="number" id="year" name="year" autocomplete="year"required><br>
-        Condition<br><input type="text" id="condition" name="condition" autocomplete="condition"required><br>
+        Year<br><input type="number" id="year" name="year" autocomplete="year" required><br>
+        Condition<br><input type="text" id="condition" name="condition" autocomplete="condition" required><br>
         Cost<br><input type="number" id="cost" name="cost" autocomplete="cost" required><br>
-        Year Of Purchase<br><input type="number" id="year_of_purchase" name="year_of_purchase" autocomplete="year_of_purchase"required><br>
-        Offers<br><input type="number" id="offers" name="offers"><br>
+        Year Of Purchase<br><input type="number" id="year_of_purchase" name="year_of_purchase" autocomplete="year_of_purchase" required><br>
+        Offers<br><input type="text" id="offers" name="offers"><br>
         Comments:<textarea id="comments" name="comments"></textarea><br>
-        Username<input type="text" id="username" name="username" autocomplete="username"required><br>
+        Username<input type="text" id="username" name="username" autocomplete="username" required><br>
         <button type="button" onclick="createRow()">Submit</button>
     </form>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -32,8 +32,8 @@
             record.condition = newRecord.querySelector('input[name="condition"]').value;
             record.cost = newRecord.querySelector('input[name="cost"]').value;
             record.year_of_purchase = newRecord.querySelector('input[name="year_of_purchase"]').value;
-            record.offers = newRecord.querySelector('input[name="offers"]').value;
-            record.comments = newRecord.querySelector('textarea[name="comments"]').value;
+            record.offers = newRecord.querySelector('input[name="offers"]').value.split(',').map(Number); // Convert to array of numbers
+            record.comments = newRecord.querySelector('textarea[name="comments"]').value.split(','); // Convert to array of strings
             record.username = newRecord.querySelector('input[name="username"]').value;
 
             console.log("New record is " + JSON.stringify(record));
@@ -44,7 +44,7 @@
 
         function sendDataToServer(record) {
             $.ajax({
-                url: '/records/new', // Make sure this URL matches your server endpoint
+                url: '/records/new',
                 method: 'POST',
                 contentType: 'application/json',
                 data: JSON.stringify(record),

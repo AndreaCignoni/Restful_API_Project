@@ -77,21 +77,21 @@ class RecordForm(BaseModel):
     condition: str
     cost: int 
     year_of_purchase: int
+    offers: str
+    comments: int
+    username: str
+    
+class RecordForm(BaseModel):
+    title: str
+    author: str
+    label: str
+    year: int  
+    condition: str
+    cost: int 
+    year_of_purchase: int
     offers: Optional[List[int]] = []
     comments: Optional[List[str]] = []
-    username: str # This should match a username in the users table
-    
-class RecordUpdate(BaseModel):
-    title: Optional[str]
-    author: Optional[str]
-    label: Optional[str]
-    year: Optional[int]
-    condition: Optional[str]
-    cost: Optional[int]
-    year_of_purchase: Optional[int]
-    offers: Optional[int]  
-    comment: Optional[Comment]
-    username: str # This should match a username in the users table
+    username: str
 
 
 # Endpoint to provide basic information about the API
@@ -280,16 +280,12 @@ def browse_records():
         return f"An error occurred: {str(e)}", 500
 
 # Endpoint to create a new record
-@app.route('/records/new', methods=['GET', 'POST'])
+@app.route('/records/new', methods=['GET','POST'])
 def create_record():
-    if request.method == 'GET':
-        return render_template('newRecord.html')
-    elif request.method == 'POST':
+    if request.method == 'POST':
         try:
             # Get JSON data from the request
-            data = request.json
-            # Validate incoming JSON data using Pydantic model
-            registered_record = RecordForm(**data)
+            registered_record = RecordForm(**request.json)
 
             # Execute SQL query to insert user data into the database
             cursor.execute("""
@@ -312,14 +308,11 @@ def create_record():
             conn.commit()
 
             return "Record registered successfully"
-        except ValueError as ve:
-            # Rollback the transaction in case of a validation error
-            conn.rollback()
-            return f"Validation error: {str(ve)}", 400
         except Exception as e:
-            # Rollback the transaction in case of any other error
-            conn.rollback()
-            return f"Error: {str(e)}", 500
+            # Handle database and validation errors
+            return f"Registration error: {str(e)}", 400
+    else:
+        return render_template('newRecord.html')
 
 # Endpoint to search records by title
 @app.route('/records/<title>', methods=['GET'])
