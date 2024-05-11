@@ -388,21 +388,28 @@ def update_record(record_id):
         return jsonify({'error': f"An error occurred: {str(e)}"}), 500
 
 # Endpoint to DELETE a registered record
-@app.route('/records/<title>/delete', methods=['DELETE'])
-def delete_record(title):
+@app.route('/records/<int:record_id>/delete', methods=['GET', 'DELETE'])
+def delete_record(record_id):
     try:
-        # Attempt to delete a record
-        with conn.cursor() as cursor:
-            cursor.execute("DELETE FROM records WHERE title = %s", (title,))
+        if request.method == 'GET':
+            # Fetch user data and render userDelete.html template
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT * FROM records WHERE record_id = %s", (record_id,))
+                record = cursor.fetchone()
+                if record:
+                    return render_template('recordDelete.html', record=record), 200
+                else:
+                    return render_template('recordDelete.html', error='Record not found'), 404
+        elif request.method == 'DELETE':
+            with conn.cursor() as cursor:
+                cursor.execute("DELETE FROM records WHERE record_id = %s", (record_id,))
+                conn.commit()
             if cursor.rowcount > 0:
-     # Render the recordDelete.html template with a success message
-                return render_template('recordDelete.html', message="Record deleted successfully"), 200
+                return jsonify({'message': 'Record deleted successfully'}), 200
             else:
-                # Render the recordDelete.html template with an error message
-                return render_template('recordDelete.html', error="Record not found"), 404
+                return jsonify({'error': 'Record not found'}), 404
     except Exception as e:
-        # Render the recordDelete.html template with an error message
-        return render_template('recordDelete.html', error=f"An error occurred: {str(e)}"), 500
+            return jsonify({'error': f"An error occurred: {str(e)}"}), 500
     
 if __name__ == '__main__':
     app.run(debug=True)

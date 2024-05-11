@@ -67,21 +67,8 @@
         }
 
         function deleteRecord(recordId) {
-            // Send a delete request to the server
-            fetch('/records/' + recordId + '/delete', {
-                method: 'DELETE'
-            })
-            .then(response => {
-                if (response.ok) {
-                    // Reload the page to reflect changes
-                    window.location.reload();
-                } else {
-                    console.error('Failed to delete record:', response.statusText);
-                }
-            })
-            .catch(error => {
-                console.error('Delete record error:', error.message);
-            });
+            // Redirect to delete page with record ID
+            window.location.href = '/records/' + recordId + '/delete';
         }
     </script>
 </body>

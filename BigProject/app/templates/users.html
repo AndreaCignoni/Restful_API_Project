@@ -50,12 +50,7 @@
             window.location.href = '/registration_form';
         }
 
-        // Other functions for update and delete actions
-        function updateUser(userId) {
-            // Redirect to update page with user ID
-            window.location.href = '/users/' + userId + '/profile/update';
-        }
-
+        // Function to delete user profile
         function deleteUser(userId) {
             // Send a delete request to the server
             fetch('/users/' + userId + '/profile/delete', {
@@ -65,13 +60,29 @@
                 if (response.ok) {
                     // Reload the page to reflect changes
                     window.location.reload();
+                } else if (response.status === 400) {
+                    // User cannot be deleted due to database constraints
+                    return response.json();
                 } else {
-                    console.error('Failed to delete user:', response.statusText);
+                    throw new Error('Failed to delete user: ' + response.statusText);
+                }
+            })
+            .then(data => {
+                if (data && data.error) {
+                    // Display error message from the server
+                    alert(data.error);
                 }
             })
             .catch(error => {
                 console.error('Delete user error:', error.message);
+                alert('Before deleting this user, please be assured that his/her collection is withdrawn from platform!');
             });
+        }
+
+        // Other functions for update and delete actions
+        function updateUser(userId) {
+            // Redirect to update page with user ID
+            window.location.href = '/users/' + userId + '/profile/update';
         }
     </script>
 </body>
