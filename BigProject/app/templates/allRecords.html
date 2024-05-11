@@ -66,9 +66,33 @@
             window.location.href = '/records/' + recordId + '/update';
         }
 
+        // Function to delete user profile
         function deleteRecord(recordId) {
-            // Redirect to delete page with record ID
-            window.location.href = '/records/' + recordId + '/delete';
+            // Send a delete request to the server
+            fetch('/records/' + recordId + '/delete', {
+                method: 'DELETE'
+            })
+            .then(response => {
+                if (response.ok) {
+                    // Reload the page to reflect changes
+                    window.location.reload();
+                } else if (response.status === 400) {
+                    // User cannot be deleted due to database constraints
+                    return response.json();
+                } else {
+                    throw new Error('Failed to delete recprd: ' + response.statusText);
+                }
+            })
+            .then(data => {
+                if (data && data.error) {
+                    // Display error message from the server
+                    alert(data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Delete record error:', error.message);
+                alert('Error deleting user profile: ' + error.message);
+            });
         }
     </script>
 </body>

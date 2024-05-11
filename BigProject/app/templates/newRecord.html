@@ -50,10 +50,15 @@
                 data: JSON.stringify(record),
                 success: function(response) {
                     console.log('Record successfully created');
+                    // Show success message and redirect
+                    alert("Record successfully created!");
+                    window.location.href = "/records";
                 },
                 error: function(xhr, status, error) {
                     console.error('Failed to create new record:', status, error);
                     console.error(xhr.responseText); // Log server response for more details
+                    // Show error message
+                    alert("Failed to create new record: " + error);
                 }
             });
         }

@@ -46,6 +46,8 @@
                 data: JSON.stringify(user),
                 success: function(response) {
                     console.log('User data sent successfully');
+                    // Redirect to users page after successful user creation
+                    window.location.href = '/users';
                 },
                 error: function(xhr, status, error) {
                     console.error('Failed to send user data:', status, error);
