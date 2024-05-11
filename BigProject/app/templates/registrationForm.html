@@ -8,22 +8,15 @@
 </head>
 <body>
     <form id="registrationForm">
-        <!-- Your registration form inputs here -->
         First Name<br><input type="text" id="fname" name="fname" autocomplete="given-name" required><br>
-        <!-- autocomplete="given-name" for first name -->
         Last Name<br><input type="text" id="lname" name="lname" autocomplete="family-name" required><br>
-        <!-- autocomplete="family-name" for last name -->
         Gender<br>
         male<input type="radio" id="male" name="gender" value="male">
         female<input type="radio" id="female" name="gender" value="female"><br>
         Nationality<br><input type="text" id="nationality" name="nationality" autocomplete="country" required><br>
-        <!-- autocomplete="country" for nationality -->
         Email<br><input type="email" id="email" name="email" autocomplete="email" required><br>
-        <!-- autocomplete="email" for email -->
         Username<br><input type="text" id="username" name="username" autocomplete="username" required><br>
-        <!-- autocomplete="username" for username -->
         Password<br><input type="password" id="password" name="password" autocomplete="new-password" required><br>
-        <!-- autocomplete="new-password" for password -->
         <button onclick="createRow()">Submit</button>
     </form>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>

@@ -7,64 +7,97 @@
     <title>Update User Profile</title>
 </head>
 <body>
-    <h1>Update User Profile</h1>
-    <form id="updateForm">
-        <div>
-            <label for="fname">First Name:</label>
-            <input type="text" id="fname" name="fname" value="{{ user.fname }}">
-        </div>
-        <div>
-            <label for="lname">Last Name:</label>
-            <input type="text" id="lname" name="lname" value="{{ user.lname }}">
-        </div>
-        <div>
-            <label for="gender">Gender:</label>
-            <select id="gender" name="gender">
-                <option value="male" {% if user.gender == 'male' %} selected {% endif %}>Male</option>
-                <option value="female" {% if user.gender == 'female' %} selected {% endif %}>Female</option>
-                <option value="other" {% if user.gender == 'other' %} selected {% endif %}>Other</option>
-            </select>
-        </div>
-        <div>
-            <label for="nationality">Nationality:</label>
-            <input type="text" id="nationality" name="nationality" value="{{ user.nationality }}">
-        </div>
-        <div>
-            <label for="email">Email:</label>
-            <input type="email" id="email" name="email" value="{{ user.email }}">
-        </div>
-        <div>
-            <label for="username">Username:</label>
-            <input type="text" id="username" name="username" value="{{ user.username }}">
-        </div>
-        <div>
-            <button type="submit">Save</button>
-        </div>
+    <form id="userUpdateForm">
+        First Name<br><input type="text" id="fname" name="fname" autocomplete="given-name" required><br>
+        Last Name<br><input type="text" id="lname" name="lname" autocomplete="family-name" required><br>
+        Gender<br>
+        male<input type="radio" id="male" name="gender" value="male">
+        female<input type="radio" id="female" name="gender" value="female"><br>
+        Nationality<br><input type="text" id="nationality" name="nationality" autocomplete="country" required><br>
+        Email<br><input type="email" id="email" name="email" autocomplete="email" required><br>
+        Username<br><input type="text" id="username" name="username" autocomplete="username" required><br>
+        Password<br><input type="password" id="password" name="password" autocomplete="new-password" required><br>
+        <span><button id="doUpdateButton" onclick="doUpdate()">Submit</button></span>
     </form>
-
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
-        document.getElementById('updateForm').addEventListener('submit', async (event) => {
-            event.preventDefault();
-            
-            const formData = new FormData(event.target);
-            const userId = formData.get('user_id');
-            
-            try {
-                const response = await fetch(`/users/${userId}/profile/update`, {
-                    method: 'PUT',
-                    body: formData
-                });
+        function showViewAll(){
+            document.getElementById('userTable').style.display="block"
+            document.getElementById('createUpdateForm').style.display="none"
+        }
+        function showUpdate(buttonElement){
+            document.getElementById('userTable').style.display="none"
+            document.getElementById('createUpdateForm').style.display="block"
 
-                if (response.ok) {
-                    // Redirect to user profile page or display success message
-                    window.location.href = `/users/${userId}/profile`;
-                } else {
-                    console.error('Failed to update user profile:', response.statusText);
-                }
-            } catch (error) {
-                console.error('Update user profile error:', error.message);
+            document.getElementById('updateLabel').style.display="inline"
+
+            document.getElementById('doUpdateButton').style.display="block"
+
+            var rowElement = buttonElement.parentNode.parentNode;
+            var user = getUserFromRow(rowElement);
+            populateFormWithUser(user);
+        }
+
+        function doUpdate(){
+            var user = getUserFromForm();
+            var rowElement = document.getElementById(user.id);
+            updateUserAjax(user);
+            setUserInRow(rowElement, user)
+            clearForm();
+            showViewAll();
+        }
+
+        function clearForm(){
+            var form = document.getElementById('userUpdateForm');
+            form.reset();
+        }
+
+        function getUserFromForm(){
+            var form = document.getElementById('userUpdateForm');
+            var user = {
+                id: form.querySelector('input[name="id"]').value,
+                fname: form.querySelector('input[name="fname"]').value,
+                lname: form.querySelector('input[name="lname"]').value,
+                gender: form.querySelector('input[name="gender"]:checked').value,
+                nationality: form.querySelector('input[name="nationality"]').value,
+                email: form.querySelector('input[name="email"]').value,
+                username: form.querySelector('input[name="username"]').value,
+                password: form.querySelector('input[name="password"]').value
+            };
+            return user;
+        }
+
+        function populateFormWithUser(user){
+            var form = document.getElementById('userUpdateForm');
+            form.querySelector('input[name="id"]').disabled = true;
+
+            form.querySelector('input[name="id"]').value  = user.id;
+            form.querySelector('input[name="fname"]').value= user.fname;
+            form.querySelector('input[name="lname"]').value= user.lname;
+            form.querySelector('input[name="gender"][value="' + user.gender + '"]').checked = true;
+            form.querySelector('input[name="nationality"]').value= user.nationality;
+            form.querySelector('input[name="email"]').value= user.email;
+            form.querySelector('input[name="username"]').value= user.username;
+            form.querySelector('input[name="password"]').value= user.password;
+            return user;
+        }
+
+            function updateUserAjax(user){
+        console.log("Updating user:", JSON.stringify(user));
+        $.ajax({
+            url: "/users/" + encodeURI(user.id) + '/profile/update',
+            method: "PUT",
+            data: JSON.stringify(user),
+            dataType: "json",
+            contentType: "application/json; charset=utf-8",
+            success: function(result){
+                console.log("Update successful:", result);
+            },
+            error: function(xhr, status, error){
+                console.error("Update error:", status, error);
             }
         });
+    }
     </script>
 </body>
 </html>

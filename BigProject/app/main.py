@@ -219,6 +219,7 @@ def update_user(id):
                     return render_template('userUpdate.html', error='User not found'), 404
         elif request.method == 'PUT':
             data = request.json
+            print("Received data:", data)
             with conn.cursor() as cursor:
                 cursor.execute("""
                     UPDATE users
@@ -237,10 +238,13 @@ def update_user(id):
                 conn.commit()
 
             if cursor.rowcount > 0:
+                print("User profile updated successfully")
                 return jsonify({'message': 'User profile updated successfully'}), 200
             else:
+                print("User not found")
                 return jsonify({'error': 'User not found'}), 404
     except Exception as e:
+        print("An error occurred:", str(e))
         return jsonify({'error': f"An error occurred: {str(e)}"}), 500
 
 # Route to delete a user profile
