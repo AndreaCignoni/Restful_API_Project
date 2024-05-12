@@ -13,7 +13,7 @@
 # Author: Andrea Cignoni
 
 import json
-from flask import Flask, request, jsonify, make_response, render_template
+from flask import Flask, request, jsonify, make_response, render_template, abort
 from pydantic import BaseModel
 from typing import List, Optional
 import psycopg2
@@ -236,13 +236,12 @@ def update_user(id):
                     id
                 ))
                 conn.commit()
-
-            if cursor.rowcount > 0:
-                print("User profile updated successfully")
-                return jsonify({'message': 'User profile updated successfully'}), 200
-            else:
-                print("User not found")
-                return jsonify({'error': 'User not found'}), 404
+                if cursor.rowcount > 0:
+                    print("User profile updated successfully")
+                    return jsonify({'message': 'User profile updated successfully'}), 200
+                else:
+                    print("User not found")
+                    return jsonify({'error': 'User not found'}), 404
     except Exception as e:
         print("An error occurred:", str(e))
         return jsonify({'error': f"An error occurred: {str(e)}"}), 500
@@ -363,27 +362,27 @@ def update_record(record_id):
                 else:
                     return render_template('recordUpdate.html', error='Record not found'), 404
         elif request.method == 'PUT':
-            data = request.json
-            cursor.execute("""
-            UPDATE records
-            SET title = %s, author = %s, label = %s, year = %s, condition = %s, cost = %s, year_of_purchase = %s, comments = %s
-            WHERE record_id = %s
-            """, (
-                data.get('title'),
-                data.get('author'),
-                data.get('label'),
-                data.get('year'),
-                data.get('condition'),
-                data.get('cost'),
-                data.get('year_of_purchase'),
-                data.get('comments'),
-                record_id
-            ))
-            conn.commit()
-            if cursor.rowcount > 0:
-                return jsonify({"message": "Record form updated successfully"}), 200
-            else:
-                return jsonify({"error": "Record not found"}), 404
+                data = request.json
+                cursor.execute("""
+                UPDATE records
+                SET title = %s, author = %s, label = %s, year = %s, condition = %s, cost = %s, year_of_purchase = %s, comments = %s
+                WHERE record_id = %s
+                """, (
+                    data.get('title'),
+                    data.get('author'),
+                    data.get('label'),
+                    data.get('year'),
+                    data.get('condition'),
+                    data.get('cost'),
+                    data.get('year_of_purchase'),
+                    data.get('comments'),
+                    record_id
+                ))
+                conn.commit()
+                if cursor.rowcount > 0:
+                    return jsonify({"message": "Record form updated successfully"}), 200
+                else:
+                    return jsonify({"error": "Record not found"}), 404
     except Exception as e:
         return jsonify({'error': f"An error occurred: {str(e)}"}), 500
 

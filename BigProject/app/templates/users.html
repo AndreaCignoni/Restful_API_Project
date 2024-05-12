@@ -11,7 +11,14 @@
         <h1>Record Addicts</h1>
         <!-- Create User button -->
         <button id="showCreateButton" onclick="createUser()" class="btn btn-primary">Create User</button>
-        <table class="table">
+        
+        <!-- Search form -->
+        <div class="input-group mt-3">
+            <input type="text" id="searchInput" class="form-control" placeholder="Search by Username">
+            <button onclick="searchByUsername()" class="btn btn-outline-secondary" type="button">Search</button>
+        </div>
+        
+        <table class="table mt-3">
             <thead>
                 <tr>
                     <th>ID</th>
@@ -35,14 +42,16 @@
                         <td>{{ user['email'] }}</td>
                         <td>{{ user['username'] }}</td>
                         <td>
-                            <button id="updateUser" onclick="updateUser('{{ user.id }}')" class="btn btn-primary">Update</button> <!-- Update button -->
-                            <button id="deleteUser" onclick="confirmDelete('{{ user.id }}')" class="btn btn-danger">Delete</button> <!-- Delete button -->
+                            <button id="updateUser{{ user.id }}" onclick="updateUser('{{ user.id }}')" class="btn btn-primary">Edit</button> <!-- Update button -->
+                            <button id="deleteUser{{ user.id }}" onclick="confirmDelete('{{ user.id }}')" class="btn btn-danger">Delete</button> <!-- Delete button -->
+                            <button id="searchUser{{ user.id }}" onclick="searchUser('{{ user.id }}')" class="btn btn-info">View Profile</button> <!-- View Profile button -->
                         </td>
                     </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
+    
     <!-- JavaScript function for create user action -->
     <script>
         function createUser() {
@@ -86,10 +95,26 @@
             }
         }
 
-        // Other functions for update and delete actions
+        // Function to redirect to the update page
         function updateUser(userId) {
             // Redirect to update page with user ID
             window.location.href = '/users/' + userId + '/profile/update';
+        }
+
+        // Function to redirect to user profile
+        function searchUser(userId) {
+            // Redirect to user profile page with user ID
+            window.location.href = '/users/' + userId + '/profile';
+        }
+
+        // Function to search user by username
+        function searchByUsername() {
+            const username = document.getElementById('searchInput').value.trim();
+            if (username !== '') {
+                window.location.href = '/users/' + username + '/profile';
+            } else {
+                alert('Please enter a username to search.');
+            }
         }
     </script>
 </body>

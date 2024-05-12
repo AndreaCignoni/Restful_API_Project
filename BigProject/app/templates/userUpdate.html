@@ -7,7 +7,7 @@
     <title>Update User Profile</title>
 </head>
 <body>
-    <form id="userUpdateForm">
+    <form id="userUpdateForm" method="PUT" data-user-id="">
         First Name<br><input type="text" id="fname" name="fname" autocomplete="given-name" required><br>
         Last Name<br><input type="text" id="lname" name="lname" autocomplete="family-name" required><br>
         Gender<br>
@@ -21,6 +21,30 @@
     </form>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
+            function doUpdate(){
+                var user = getUserFromForm();
+                var rowElement = document.getElementById(user.id);
+                updateUserAjax(user);
+                setUserInRow(rowElement, user)
+                clearForm();
+                showViewAll();
+            }
+            function updateUserAjax(user){
+                console.log("Updating user:", JSON.stringify(user));
+                $.ajax({
+                    url: "/users/" + encodeURI(user.id) + '/profile/update',
+                    method: "PUT",
+                    data: JSON.stringify(user),
+                    dataType: "json",
+                    contentType: "application/json; charset=utf-8",
+                    success: function(result){
+                        console.log("Update successful:", result);
+                    },
+                    error: function(xhr, status, error){
+                        console.error("Update error:", status, error);
+                    }
+                });
+        }
         function showViewAll(){
             document.getElementById('userTable').style.display="block"
             document.getElementById('createUpdateForm').style.display="none"
@@ -36,15 +60,7 @@
             var rowElement = buttonElement.parentNode.parentNode;
             var user = getUserFromRow(rowElement);
             populateFormWithUser(user);
-        }
-
-        function doUpdate(){
-            var user = getUserFromForm();
-            var rowElement = document.getElementById(user.id);
-            updateUserAjax(user);
-            setUserInRow(rowElement, user)
-            clearForm();
-            showViewAll();
+            document.getElementById('userUpdateForm').setAttribute('data-user-id', userId);
         }
 
         function addUserToTable(user) {
@@ -80,8 +96,6 @@
             cell9.innerHTML = '<button onclick="showUpdate(this)">Update</button>';
         }
 
-
-
         function clearForm(){
             var form = document.getElementById('userUpdateForm');
             form.reset();
@@ -89,8 +103,9 @@
 
         function getUserFromForm(){
             var form = document.getElementById('userUpdateForm');
+            var userId = document.getElementById('userId').value;
             var user = {
-                id: form.querySelector('input[name="id"]').value,
+                id: userId,
                 fname: form.querySelector('input[name="fname"]').value,
                 lname: form.querySelector('input[name="lname"]').value,
                 gender: form.querySelector('input[name="gender"]:checked').value,
@@ -116,23 +131,12 @@
             form.querySelector('input[name="password"]').value= user.password;
             return user;
         }
-
-            function updateUserAjax(user){
-        console.log("Updating user:", JSON.stringify(user));
-        $.ajax({
-            url: "/users/" + encodeURI(user.id) + '/profile/update',
-            method: "PUT",
-            data: JSON.stringify(user),
-            dataType: "json",
-            contentType: "application/json; charset=utf-8",
-            success: function(result){
-                console.log("Update successful:", result);
-            },
-            error: function(xhr, status, error){
-                console.error("Update error:", status, error);
-            }
+        // Submit form on button click
+        $(document).on("submit", "#updateForm", function(event){
+            event.preventDefault();
+            updateUser();
         });
-    }
+
     </script>
 </body>
 </html>

@@ -13,6 +13,11 @@
         <div>
             <button id="showCreateButton" onclick="showCreate()" class="btn btn-primary">Create Record</button>
         </div>
+         <!-- Search form -->
+        <div class="input-group mt-3">
+            <input type="text" id="searchInput" class="form-control" placeholder="Search by Record Title">
+            <button onclick="searchByUsername()" class="btn btn-outline-secondary" type="button">Search</button>
+        </div>
         <table class="table">
             <thead>
                 <tr>
@@ -47,6 +52,7 @@
                     <td>
                         <button class="updateRecord btn btn-secondary" onclick="updateRecord('{{record.record_id}}')">Update</button>
                         <button class="deleteRecord btn btn-danger" onclick="deleteRecord('{{record.record_id}}')">Delete</button>
+                        <button id="searchRecord{{record.record_id }}" onclick="searchRecord('{{record.record_id }}')" class="btn btn-info">View Record Details</button> <!-- View Record Profile button -->
                     </td>
                 </tr>
                 {% endfor %}
@@ -91,8 +97,23 @@
             })
             .catch(error => {
                 console.error('Delete record error:', error.message);
-                alert('Error deleting user profile: ' + error.message);
+                alert('Error deleting record profile: ' + error.message);
             });
+        }
+        // Function to redirect to user profile
+        function searchRecord(recordId) {
+        // Redirect to user profile page with user ID
+            window.location.href = '/records/' + recordId;
+        }
+
+        // Function to search user by username
+        function searchByRecordname() {
+            const title = document.getElementById('searchInput').value.trim();
+            if (title !== '') {
+                window.location.href = '/records/' + title;
+            } else {
+                alert('Please enter a title to search.');
+            }
         }
     </script>
 </body>
