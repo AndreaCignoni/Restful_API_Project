@@ -46,7 +46,7 @@
             // Submit form on button click
             $(document).on("submit", "#userUpdateForm", function(event) {
                 event.preventDefault();
-                updateUser();
+                doUpdate(); // Call doUpdate instead of updateUser
             });
     
             document.getElementById('doUpdateButton').addEventListener('click', function() {
@@ -116,6 +116,7 @@
             rowElement.cells[7].firstChild.textContent = user.password;
         }
     
+    
         function populateFormWithUser(user) {
             var form = document.getElementById('userUpdateForm');
             form.querySelector('input[name="id"]').disabled = true;
@@ -162,6 +163,6 @@
                 }
             });
         }
-    </script>
+    </script>    
 </body>
 </html>
