@@ -21,38 +21,33 @@
     </form>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            function showUpdate(buttonElement) {
-                document.getElementById('userTable').style.display = "none";
-                document.getElementById('createUpdateForm').style.display = "block";
-                document.getElementById('updateLabel').style.display = "inline";
-                document.getElementById('doUpdateButton').style.display = "block";
-    
-                var rowElement = buttonElement.parentNode.parentNode;
-                var user = getUserFromRow(rowElement);
-                populateFormWithUser(user);
-                document.getElementById('userUpdateForm').setAttribute('data-user-id', userId);
+        function getUserFromForm() {
+            var form = document.getElementById('userUpdateForm');
+            if (!form) {
+                console.error("Form is null");
+                return null;
             }
+            var user = {};
+            user.id = form.querySelector('input[name="id"]').value;
+            user.fname = form.querySelector('input[name="fname"]').value;
+            user.lname = form.querySelector('input[name="lname"]').value;
+            user.gender = form.querySelector('input[name="gender"]:checked').value;
+            user.nationality = form.querySelector('input[name="nationality"]').value;
+            user.email = form.querySelector('input[name="email"]').value;
+            user.username = form.querySelector('input[name="username"]').value;
+            user.password = form.querySelector('input[name="password"]').value;
+            console.log(JSON.stringify(user));
+            return user;
+        }
     
-            function doUpdate() {
-                var user = getUserFromForm();
-                var rowElement = document.getElementById(user.id);
-                updateUserAjax(user);
-                setUserInRow(rowElement, user);
-                clearForm();
-                showViewAll();
+        function doUpdate() {
+            var user = getUserFromForm();
+            if (!user) {
+                console.error("User is null");
+                return;
             }
-    
-            // Submit form on button click
-            $(document).on("submit", "#userUpdateForm", function(event) {
-                event.preventDefault();
-                doUpdate(); // Call doUpdate instead of updateUser
-            });
-    
-            document.getElementById('doUpdateButton').addEventListener('click', function() {
-                doUpdate();
-            });
-        });
+            updateUserAjax(user);
+        }
     
         function addUserToTable(user) {
             var tableElement = document.getElementById('userTable');
@@ -131,38 +126,45 @@
             form.querySelector('input[name="password"]').value = user.password;
             return user;
         }
-    
-        function getUserFromForm() {
-            var form = document.getElementById('createUpdateForm');
-            var user = {};
-            user.id = form.querySelector('input[name="id"]').value;
-            user.fname = form.querySelector('input[name="fname"]').value;
-            user.lname = form.querySelector('input[name="lname"]').value;
-            user.gender = form.querySelector('input[name="gender"]:checked').value;
-            user.nationality = form.querySelector('input[name="nationality"]').value;
-            user.email = form.querySelector('input[name="email"]').value;
-            user.username = form.querySelector('input[name="username"]').value;
-            user.password = form.querySelector('input[name="password"]').value;
-            console.log(JSON.stringify(user));
-            return user;
-        }
-    
-        function updateUserAjax(user) {
-            console.log("Updating user:", JSON.stringify(user));
-            $.ajax({
-                url: "/users/" + encodeURI(user.id) + '/profile/update',
-                method: "PUT",
-                data: JSON.stringify(user),
-                dataType: "json",
-                contentType: "application/json; charset=utf-8",
-                success: function(result) {
-                    console.log("Update successful:", result);
-                },
-                error: function(xhr, status, error) {
-                    console.error("Update error:", status, error);
-                }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Function to update user using AJAX
+            function updateUserAjax(user) {
+                console.log('Updating user:', JSON.stringify(user));
+                var userId = parseInt(user.id);
+                var url = "users/" + encodeURI(userId) + "/profileupdate"; // Assuming 'users' is the endpoint
+                console.log('URL:', url);
+                $.ajax({ // Assuming you are using jQuery for AJAX
+                    url: url,
+                    method: 'PUT',
+                    data: JSON.stringify(user),
+                    dataType: 'json',
+                    contentType: 'application/json; charset=utf-8',
+                    success: function(result) {
+                        console.log('Update successful:', result);
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Update error:', status, error);
+                    }
+                });
+            }
+
+            // Submit form on button click
+            $(document).on('submit', '#userUpdateForm', function(event) {
+                event.preventDefault();
+                doUpdate();
             });
-        }
-    </script>    
+
+            document.getElementById('doUpdateButton').addEventListener('click', function() {
+                doUpdate();
+            });
+
+            function doUpdate() {
+                // Get user data from the form and call updateUserAjax
+                var userData = {}; // Replace with code to get user data from the form
+                updateUserAjax(userData);
+            }
+        });
+    </script>       
 </body>
 </html>

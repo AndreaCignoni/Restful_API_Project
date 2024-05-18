@@ -14,6 +14,7 @@
 
 import json
 from flask import Flask, request, jsonify, make_response, render_template, abort
+from flask_cors import CORS
 from pydantic import BaseModel
 from typing import List, Optional
 import psycopg2
@@ -204,54 +205,42 @@ def search_username(username):
     except Exception as e:
         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
 
-# Route to update a user profile
-@app.route('/users/<int:id>/profile/update', methods=['GET', 'PUT'])
+# Endpoint to update a user
+@app.route('/users/<int:id>/profile/update', methods=['PUT'])
 def update_user(id):
     try:
-        if request.method == 'GET':
-            # Fetch user data and render userUpdate.html template
-            with conn.cursor() as cursor:
-                cursor.execute("SELECT * FROM users WHERE id = %s", (id,))
-                user = cursor.fetchone()
-                if user:
-                    return render_template('userUpdate.html', user=user), 200
-                else:
-                    return render_template('userUpdate.html', error='User not found'), 404
-        elif request.method == 'PUT':
-            data = request.json
-            print("Received data:", data)
-            with conn.cursor() as cursor:
-                cursor.execute("""
-                    UPDATE users
-                    SET fname = %s, lname = %s, gender = %s, nationality = %s, email = %s, username = %s, password = %s
-                    WHERE id = %s
-                """, (
-                    data.get('fname'),
-                    data.get('lname'),
-                    data.get('gender'),
-                    data.get('nationality'),
-                    data.get('email'),
-                    data.get('username'),
-                    data.get('password'),
-                    id
-                ))
-                conn.commit()
-                if cursor.rowcount > 0:
-                    print("User profile updated successfully")
-                    return jsonify({'message': 'User profile updated successfully'}), 200
-                else:
-                    print("User not found")
-                    return jsonify({'error': 'User not found'}), 404
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT * FROM users WHERE id = %s", (id,))
+            user = cursor.fetchone()
+            if not user:
+                return jsonify({'error': 'User not found'}), 404
+
+        fname = request.form.get('fname')
+        lname = request.form.get('lname')
+        gender = request.form.get('gender')
+        nationality = request.form.get('nationality')
+        email = request.form.get('email')
+        username = request.form.get('username')
+        password = request.form.get('password')
+
+        with conn.cursor() as cursor:
+            cursor.execute(
+                "UPDATE users SET fname = %s, lname = %s, gender = %s, nationality = %s, email = %s, username = %s, password = %s WHERE id = %s",
+                (fname, lname, gender, nationality, email, username, password, id)
+            )
+            conn.commit()
+
+        return render_template('userUpdate.html')
+
     except Exception as e:
-        print("An error occurred:", str(e))
-        return jsonify({'error': f"An error occurred: {str(e)}"}), 500
+        conn.rollback()
+        return jsonify({'error': f'An error occurred: {str(e)}'}), 500
 
 # Route to delete a user profile
 @app.route('/users/<int:id>/profile/delete', methods=['GET', 'DELETE'])
 def delete_user(id):
     try:
         if request.method == 'GET':
-            # Fetch user data and render userDelete.html template
             with conn.cursor() as cursor:
                 cursor.execute("SELECT * FROM users WHERE id = %s", (id,))
                 user = cursor.fetchone()
