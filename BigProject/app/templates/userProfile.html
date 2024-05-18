@@ -7,70 +7,119 @@
     <title>User Profile</title>
 </head>
 <body>
-    <h1>User Profile</h1>
-    <table>
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>First Name</th>
-                <th>Last Name</th>
-                <th>Gender</th>
-                <th>Nationality</th>
-                <th>Email</th>
-                <th>Username</th>
-                <th>Actions</th> <!-- Added column for actions -->
-            </tr>
-        </thead>
-        <tbody id="UserProfile">
-            <!-- User profile data will be dynamically inserted here -->
-        </tbody>
-    </table>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            async function fetchUserProfile() {
-            try {
-                const url = window.location.href;
-                const match = url.match(/\/users\/(\d+)\/profile/);
-                
-                if (match) {
-                    const userId = match[1];
-                    const response = await fetch(`/users/${userId}/profile`);
-                    const userData = await response.json();
-
-                    if (response.ok) {
-                        displayUserProfile(userData);
-                    } else {
-                        console.error('Failed to fetch user profile:', userData.error);
-                    }
-                } else {
-                    console.error('User ID not found in URL.');
-                }
-            } catch (error) {
-                console.error('Fetch user profile error:', error.message);
-            }
-        }
-
-            function displayUserProfile(user) {
-                const userProfileTable = document.getElementById('UserProfile');
-                const userProfileRow = document.createElement('tr');
-
-                userProfileRow.innerHTML = `
-                    <td>${user.id}</td>
-                    <td>${user.fname}</td>
-                    <td>${user.lname}</td>
-                    <td>${user.gender}</td>
-                    <td>${user.nationality}</td>
-                    <td>${user.email}</td>
-                    <td>${user.username}</td>
+    <div class="container">
+        <h1 class="mt-4">User Profile</h1>
+        <table class="table mt-3" id="userTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>First Name</th>
+                    <th>Last Name</th>
+                    <th>Gender</th>
+                    <th>Nationality</th>
+                    <th>Email</th>
+                    <th>Username</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>{{ user['id'] }}</td>
+                    <td>{{ user['fname'] }}</td>
+                    <td>{{ user['lname'] }}</td>
+                    <td>{{ user['gender'] }}</td>
+                    <td>{{ user['nationality'] }}</td>
+                    <td>{{ user['email'] }}</td>
+                    <td>{{ user['username'] }}</td>
                     <td>
-                        <button onclick="updateUser(${user.id})" class="btn btn-primary">Update</button> <!-- Update button -->
-                        <button onclick="confirmDelete(${user.id})" class="btn btn-danger">Delete</button> <!-- Delete button -->
+                        <button id="updateUser{{ user.id }}" onclick="updateUser('{{ user.id }}')" class="btn btn-primary">Edit</button> <!-- Update button -->
+                        <button id="deleteUser{{ user.id }}" onclick="confirmDelete('{{ user.id }}')" class="btn btn-danger">Delete</button> <!-- Delete button -->
                     </td>
-                `;
-
-                userProfileTable.appendChild(userProfileRow);
-            }
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+function addUserToTable(user) {
+            var tableElement = document.getElementById('userTable');
+            var rowElement = tableElement.insertRow(-1);
+            rowElement.setAttribute('id', user.id);
+    
+            var cell1 = rowElement.insertCell(0);
+            cell1.innerHTML = user.id;
+    
+            var cell2 = rowElement.insertCell(1);
+            cell2.innerHTML = user.fname;
+    
+            var cell3 = rowElement.insertCell(2);
+            cell3.innerHTML = user.lname;
+    
+            var cell4 = rowElement.insertCell(3);
+            cell4.innerHTML = user.gender;
+    
+            var cell5 = rowElement.insertCell(4);
+            cell5.innerHTML = user.nationality;
+    
+            var cell6 = rowElement.insertCell(5);
+            cell6.innerHTML = user.email;
+    
+            var cell7 = rowElement.insertCell(6);
+            cell7.innerHTML = user.username;
+    
+            var cell8 = rowElement.insertCell(7);
+            cell8.innerHTML = user.password;
+    
+            var cell9 = rowElement.insertCell(8);
+            cell9.innerHTML = '<button onclick="showUpdate(this)">Update</button>';
+        }
+    
+        function clearForm() {
+            var form = document.getElementById('userTable');
+            form.reset();
+        }
+    
+        function getUserFromRow(rowElement) {
+            var user = {};
+            user.id = rowElement.getAttribute('id');
+            user.fname = rowElement.cells[1].firstChild.textContent;
+            user.lname = rowElement.cells[2].firstChild.textContent;
+            user.gender = rowElement.cells[3].firstChild.textContent;
+            user.nationality = rowElement.cells[4].firstChild.textContent;
+            user.email = rowElement.cells[5].firstChild.textContent;
+            user.username = rowElement.cells[6].firstChild.textContent;
+            user.password = rowElement.cells[7].firstChild.textContent;
+            return user;
+        }
+    
+        function setUserInRow(rowElement, user) {
+            rowElement.setAttribute('id', user.id);
+            rowElement.cells[1].firstChild.textContent = user.fname;
+            rowElement.cells[2].firstChild.textContent = user.lname;
+            rowElement.cells[3].firstChild.textContent = user.gender;
+            rowElement.cells[4].firstChild.textContent = user.nationality;
+            rowElement.cells[5].firstChild.textContent = user.email;
+            rowElement.cells[6].firstChild.textContent = user.username;
+            rowElement.cells[7].firstChild.textContent = user.password;
+        }
+    
+    
+        function populateFormWithUser(user) {
+            var form = document.getElementById('userUpdateForm');
+            form.querySelector('input[name="id"]').disabled = true;
+    
+            form.querySelector('input[name="id"]').value = user.id;
+            form.querySelector('input[name="fname"]').value = user.fname;
+            form.querySelector('input[name="lname"]').value = user.lname;
+            form.querySelector('input[name="gender"][value="' + user.gender + '"]').checked = true;
+            form.querySelector('input[name="nationality"]').value = user.nationality;
+            form.querySelector('input[name="email"]').value = user.email;
+            form.querySelector('input[name="username"]').value = user.username;
+            form.querySelector('input[name="password"]').value = user.password;
+            return user;
+        }
 
             // Function to delete user profile
             function deleteUser(userId) {
@@ -113,7 +162,24 @@
                 // Redirect to update page with user ID
                 window.location.href = '/users/' + userId + '/profile/update';
             }
-        });
+            function getUserByIdAjax(user){
+                $.ajax({
+                    "url": "/users/" + encodeURI(userId),
+                    "method": "GET",
+                    "data": "",
+                    "dataType":"JSON",
+                    contentType: "application/json; charset=utf-8",
+                    "success": function(user){
+                        // Process the retrieved user
+                        console.log(user);
+                        // Example: Display the user details in a modal
+                        addUserToTable(user);
+                    },
+                    "error": function(xhr, status, error){
+                        console.log("Error: " + status + " Message: " + error);
+                    }
+                });
+        }
     </script>
 </body>
 </html>

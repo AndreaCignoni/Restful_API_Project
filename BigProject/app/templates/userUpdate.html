@@ -7,7 +7,29 @@
     <title>Update User Profile</title>
 </head>
 <body>
-    <form id="userUpdateForm" id="createUpdateForm" method="PUT" data-user-id="">
+    <h1>Users</h1>
+    <div>
+        <table class="table" id="userTable">
+            <tr>
+                    <th>id</th>
+                    <th>First Name</th>
+                    <th>Last Name </th>
+                    <th>Gender</th>
+                    <th>male</th>
+                    <th>female</th>
+                    <th>Nationality</th>
+                    <th>Email</th>
+                    <th>username</th>
+                    <th>password</th>
+
+                    <th>Update</th>
+            </tr>
+            
+        </table>
+    </div>
+    <div id='userUpdateForm' style="display: none">
+        <h2><span id="createLabel">Create a</span> <span id="updateLabel">update</span> User</h2>
+        <input type="hidden" name="id"/>
         First Name<br><input type="text" id="fname" name="fname" autocomplete="given-name" required><br>
         Last Name<br><input type="text" id="lname" name="lname" autocomplete="family-name" required><br>
         Gender<br>
@@ -135,15 +157,15 @@
                 var url = "users/" + encodeURI(userId) + "/profileupdate"; // Assuming 'users' is the endpoint
                 console.log('URL:', url);
                 $.ajax({ // Assuming you are using jQuery for AJAX
-                    url: url,
-                    method: 'PUT',
-                    data: JSON.stringify(user),
-                    dataType: 'json',
-                    contentType: 'application/json; charset=utf-8',
-                    success: function(result) {
+                    "url": "url",
+                    "method": 'PUT',
+                    "data": JSON.stringify(user),
+                    "dataType": "JSON",
+                    contentType: "application/json; charset=utf-8",
+                    "success": function(result) {
                         console.log('Update successful:', result);
                     },
-                    error: function(xhr, status, error) {
+                    "error": function(xhr, status, error) {
                         console.error('Update error:', status, error);
                     }
                 });

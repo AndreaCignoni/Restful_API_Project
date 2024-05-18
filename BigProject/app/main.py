@@ -339,39 +339,35 @@ def search_recordID(record_id):
         return jsonify({"error": "Record not found"}), 404
     
 # Endpoint to update a record's details
-@app.route('/records/<int:record_id>/update', methods=['PUT', 'GET'])
+@app.route('/records/<int:record_id>/update', methods=['PUT'])
 def update_record(record_id):
     try:
-        if request.method == 'GET':
-            with conn.cursor() as cursor:
-                cursor.execute("SELECT * FROM records WHERE record_id = %s", (record_id,))
-                record = cursor.fetchone()
-                if record:
-                    return render_template('recordUpdate.html', record=record), 200
-                else:
-                    return render_template('recordUpdate.html', error='Record not found'), 404
-        elif request.method == 'PUT':
-                data = request.json
-                cursor.execute("""
-                UPDATE records
-                SET title = %s, author = %s, label = %s, year = %s, condition = %s, cost = %s, year_of_purchase = %s, comments = %s
-                WHERE record_id = %s
-                """, (
-                    data.get('title'),
-                    data.get('author'),
-                    data.get('label'),
-                    data.get('year'),
-                    data.get('condition'),
-                    data.get('cost'),
-                    data.get('year_of_purchase'),
-                    data.get('comments'),
-                    record_id
-                ))
-                conn.commit()
-                if cursor.rowcount > 0:
-                    return jsonify({"message": "Record form updated successfully"}), 200
-                else:
-                    return jsonify({"error": "Record not found"}), 404
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT * FROM records WHERE record_id = %s", (record_id,))
+            record = cursor.fetchone()
+            if not record:
+                return jsonify({'error': 'User not found'}), 404
+            
+        title = request.form.get('title')
+        author = request.form.get('author')
+        label = request.form.get('label')
+        year = request.form.get('year')
+        condition = request.form.get('condition')
+        cost = request.form.get('cost')
+        year_of_purchase = request.form.get('year_of_purchase')
+        comments = request.form.get('comments')
+
+        with conn.cursor() as cursor:
+            cursor.execute("""
+            UPDATE records
+            SET title = %s, author = %s, label = %s, year = %s, condition = %s, cost = %s, year_of_purchase = %s, comments = %sa
+            WHERE record_id = %s            
+            """, (title, author, label, year, condition, cost, year_of_purchase, comments, record_id)
+            )
+            conn.commit()
+
+        return render_template('recordUpdate.html')
+    
     except Exception as e:
         return jsonify({'error': f"An error occurred: {str(e)}"}), 500
 

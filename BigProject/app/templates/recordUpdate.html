@@ -7,76 +7,212 @@
     <title>Update Record Info</title>
 </head>
 <body>
+    <h1>Records</h1>
+    <div>
+        <table class="table" id="recordTable">
+            <tr>
+                    <th>record_id</th>
+                    <th>Title</th>
+                    <th>Author </th>
+                    <th>Label</th>
+                    <th>Year</th>
+                    <th>Condition</th>
+                    <th>Cost</th>
+                    <th>Offers</th>
+                    <th>Comments</th>
+                    <th>username</th>
+
+                    <th>Update</th>
+            </tr>
+            
+        </table>
+    </div>
     <h1>Update Record Info</h1>
-    <form id="updateForm">
-        Title<br><input type="text" id="title" name="title" autocomplete="title" required><br>
-        Author<br><input type="text" id="author" name="author" autocomplete="author" required><br>
-        Label<br><input type="text" id="label" name="label" autocomplete="label"><br>
-        Year<br><input type="number" id="year" name="year" autocomplete="year" required><br>
-        Condition<br><input type="text" id="condition" name="condition" autocomplete="condition" required><br>
-        Cost<br><input type="number" id="cost" name="cost" autocomplete="cost" required><br>
-        Year Of Purchase<br><input type="number" id="year_of_purchase" name="year_of_purchase" autocomplete="year_of_purchase" required><br>
-        Offers<br><input type="text" id="offers" name="offers"><br>
-        Comments:<textarea id="comments" name="comments"></textarea><br>
-        Username<input type="text" id="username" name="username" autocomplete="username" required><br>
-        <button type="submit">Save</button>
+    <form id="updateForm" style="display: none">
+        <div id='createUpdateForm' style="display: none">
+            <h2><span id="updateLabel">update</span> Record</h2>
+            <input type="hidden" name="record_id"/>
+            Title<br><input type="text" id="title" name="title" autocomplete="title" required><br>
+            Author<br><input type="text" id="author" name="author" autocomplete="author" required><br>
+            Label<br><input type="text" id="label" name="label" autocomplete="label"><br>
+            Year<br><input type="number" id="year" name="year" autocomplete="year" required><br>
+            Condition<br><input type="text" id="condition" name="condition" autocomplete="condition" required><br>
+            Cost<br><input type="number" id="cost" name="cost" autocomplete="cost" required><br>
+            Year Of Purchase<br><input type="number" id="year_of_purchase" name="year_of_purchase" autocomplete="year_of_purchase" required><br>
+            Offers<br><input type="text" id="offers" name="offers"><br>
+            Comments:<textarea id="comments" name="comments"></textarea><br>
+            Username<input type="text" id="username" name="username" autocomplete="username" required><br>
+            <span><button id="doUpdateButton" onclick="doUpdate()">Save</button></span>
     </form>
 
     <div id="message" style="display:none;"></div>
 
-    <script src="https://ajax.googleapis.com/ajaxlibs/jquery/3.4.1/jquery/min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
-        // Function to get the record ID from the URL query string
-        function getRecordIdFromUrl() {
-            var urlParams = new URLSearchParams(window.location.search);
-            var recordId = urlParams.get('id');
-            if (!recordId) {
-                console.error('Record ID not found in URL');
+        function showUpdate(buttonElement){
+            document.getElementById('recordTable').style.display="none"
+            document.getElementById('createUpdateForm').style.display="block"
+
+            document.getElementById('updateLabel').style.display="inline"
+
+            document.getElementById('doUpdateButton').style.display="block"
+
+
+            var rowElement = buttonElement.parentNode.parentNode
+            
+            var record = getRecordFromRow(rowElement)
+            populateFormWithRecord(record)
+        }      
+
+        
+        function getRecordFromForm() {
+            var form = document.getElementById('updateForm')
+            if (!form){
+                console.error("Form is null");
+                return null
             }
-            return recordId;
-        }
-    
-        // Function to update record
-        function updateRecord() {
-            var recordId = getRecordIdFromUrl();
-            if (!recordId) return; // Exit if record ID is not found
     
             var record = {};
-            var updatedRecord = document.getElementById("updateForm");
-            record.title = updatedRecord.querySelector('input[name="title"]').value;
-            record.author = updatedRecord.querySelector('input[name="author"]').value;
-            record.label = updatedRecord.querySelector('input[name="label"]').value;
-            record.year = updatedRecord.querySelector('input[name="year"]').value;
-            record.condition = updatedRecord.querySelector('input[name="condition"]').value;
-            record.cost = updatedRecord.querySelector('input[name="cost"]').value;
-            record.year_of_purchase = updatedRecord.querySelector('input[name="year_of_purchase"]').value;
-            record.offers = updatedRecord.querySelector('input[name="offers"]').value.split(',').map(Number); // Convert to array of numbers
-            record.comments = updatedRecord.querySelector('textarea[name="comments"]').value.split(','); // Convert to array of strings
-            record.username = updatedRecord.querySelector('input[name="username"]').value;
-
-            $.ajax({
-                url: '/records/' + recordId + '/update',
-                type: 'PUT',
-                contentType: 'application/json',
-                data: JSON.stringify(record),
-                success: function(response) {
-                    document.getElementById('updateForm').reset();
-                    document.getElementById('message').innerHTML = 'Record updated successfully.';
-                    document.getElementById('message').style.display = 'block';
-                },
-                error: function(xhr, status, error) {
-                    console.error('Error updating record: ' + error);
-                    document.getElementById('message').innerHTML = 'Error updating record profile.';
-                    document.getElementById('message').style.display = 'block';
-                }
-            });
+            record.record_id = form.querySelector('input[name="record_id"]').value;
+            record.title = form.querySelector('input[name="title"]').value;
+            record.author = form.querySelector('input[name="author"]').value;
+            record.label = form.querySelector('input[name="label"]').value;
+            record.year = form.querySelector('input[name="year"]').value;
+            record.condition = form.querySelector('input[name="condition"]').value;
+            record.cost = form.querySelector('input[name="cost"]').value;
+            record.year_of_purchase = form.querySelector('input[name="year_of_purchase"]').value;
+            record.offers = form.querySelector('input[name="offers"]').value.split(',').map(Number); // Convert to array of numbers
+            record.comments = form.querySelector('input[textarea="comments"]').value.split(','); // Convert to array of strings
+            record.username = form.querySelector('input[name="username"]').value;
+            return record;
         }
+
+            function doUpdate(){
+                var record =getRecordFromForm();
+                if (!record){
+                    console.error("Record is null")
+                    return;
+                }
+                updateRecordAjax(record);
+        }
+
+            function addRecordToTable(record) {
+                var tableElement = document.getElementById('recordTable');
+                var rowElement = tableElement.insertRow(-1);
+                rowElement.setAttribute('record_id', record.record_id);
         
-        // Submit form on button click
-        $(document).on("submit", "#updateForm", function(event){
-            event.preventDefault();
-            updateRecord();
-        });
+                var cell1 = rowElement.insertCell(0);
+                cell1.innerHTML = record.record_id;
+        
+                var cell2 = rowElement.insertCell(1);
+                cell2.innerHTML = record.title;
+        
+                var cell3 = rowElement.insertCell(2);
+                cell3.innerHTML = record.author;
+        
+                var cell4 = rowElement.insertCell(3);
+                cell4.innerHTML = record.label;
+        
+                var cell5 = rowElement.insertCell(4);
+                cell5.innerHTML = record.year;
+        
+                var cell6 = rowElement.insertCell(5);
+                cell6.innerHTML = record.condition;
+        
+                var cell7 = rowElement.insertCell(6);
+                cell7.innerHTML = record.cost;
+        
+                var cell8 = rowElement.insertCell(7);
+                cell8.innerHTML = record.year_of_purchase;
+
+                var cell9 = rowElement.insertCell(8);
+                cell9.innerHTML = record.offers;
+
+                var cell10 = rowElement.insertCell(9);
+                cell8.innerHTML = record.comments;
+
+                var cell11 = rowElement.insertCell(10);
+                cell11.innerHTML = record.offers;
+
+                var cell12 = rowElement.insertCell(11);
+                cell12.innerHTML = record.username;
+        
+                var cell13 = rowElement.insertCell(12);
+                cell9.innerHTML = '<button onclick="showUpdate(this)">Update</button>';
+        }
+            function clearForm(){
+                var form = document.getElementById('createUpdateForm')
+
+                form.querySelector('input[name="title"]').value=''
+                form.querySelector('input[name="author"]').value=''
+                form.querySelector('input[name="label"]').value=''
+                form.querySelector('input[name="year"]').value=''
+                form.querySelector('input[name="condition"]').value=''
+                form.querySelector('input[name="cost"]').value=''
+                form.querySelector('input[name="year_of_purchase"]').value=''
+                form.querySelector('input[name="comments"]').value=''
+                form.querySelector('input[name="usernme"]').value=''
+        }
+
+            function getRecordFromRow(rowElement){
+                var car ={}
+                record.record_id = rowElement.getAttribute('record_id');
+                record.title = rowElement.cells[1].firstChild.textContent;
+                record.label = rowElement.cells[2].firstChild.textContent;
+                record.year = parseInt(rowElement.cells[3].firstChild.textContent, 10);
+                record.condition = rowElement.cells[4].firstChild.textContent;
+                record.cost = parseFloat(rowElement.cells[5].firstChild.textContent);
+                record.year_of_purchase = parseInt(rowElement.cells[6].firstChild.textContent, 10);
+                record.comments = rowElement.cells[7].firstChild.textContent;
+                record.username = rowElement.cells[8].firstChild.textContent;
+                return record;
+        }
+            function setBookInRow(rowElement, book){
+                rowElement.cells[0].firstChild.textContent= record.record_id  
+                rowElement.cells[1].firstChild.textContent= record.title 
+                rowElement.cells[2].firstChild.textContent= record.author
+                rowElement.cells[3].firstChild.textContent= record.label
+                rowElement.cells[4].firstChild.textContent= record.year
+                rowElement.cells[5].firstChild.textContent= record.condition  
+                rowElement.cells[6].firstChild.textContent= record.cost 
+                rowElement.cells[7].firstChild.textContent= record.year_of_purchase
+                rowElement.cells[8].firstChild.textContent= record.comments
+                rowElement.cells[9].firstChild.textContent= record.username
+        }
+            function populateFormWithRecord(record){
+                var form = document.getElementById('updateForm')
+                form.querySelector('input[name="record_id"]').disabled = true
+
+                form.querySelector('input[name="record_id"]').value  = record.record_id
+                form.querySelector('input[name="title"]').value= record.title
+                form.querySelector('input[name="author"]').value= record.author
+                form.querySelector('input[name="label"]').value= record.label
+                form.querySelector('input[name="year"]').value  = record.year
+                form.querySelector('input[name="condition"]').value= record.condition
+                form.querySelector('input[name="cost"]').value= record.cost
+                form.querySelector('input[name="year_of_purchase"]').value= record.year_of_purchase
+                form.querySelector('input[name="comments"]').value= record.comments
+                form.querySelector('input[name="username"]').value= record.username
+                return record
+        }
+
+            function updateRecordAjax(record){
+            console.log(JSON.stringify(record));
+                $.ajax({
+                    "url": '/records/' + encodeURI(record.record_id) + '/update',
+                    "type": "PUT",
+                    "data": JSON.stringify(record),
+                    "dataType": "JSON",
+                    contentType: "application/json; charset=utf-8",
+                    "success":function(result){
+                // console.log(result);
+                    
+                },
+                "error":function(xhr,status,error){
+                    console.log("error: "+status+" msg:"+error);
+                    }
+                });
+            }
     </script>
 </body>
 </html>
