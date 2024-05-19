@@ -199,16 +199,16 @@
             function updateRecordAjax(record){
             console.log(JSON.stringify(record));
                 $.ajax({
-                    "url": '/records/' + encodeURI(record.record_id) + '/update',
-                    "type": "PUT",
-                    "data": JSON.stringify(record),
-                    "dataType": "JSON",
+                    url: '/records/' + encodeURI(record.record_id) + '/update',
+                    type: "PUT",
+                    data: JSON.stringify(record),
+                    dataType: 'json',
                     contentType: "application/json; charset=utf-8",
-                    "success":function(result){
+                    success:function(result){
                 // console.log(result);
                     
                 },
-                "error":function(xhr,status,error){
+                error:function(xhr,status,error){
                     console.log("error: "+status+" msg:"+error);
                     }
                 });

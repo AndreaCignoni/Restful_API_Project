@@ -157,15 +157,15 @@
                 var url = "users/" + encodeURI(userId) + "/profileupdate"; // Assuming 'users' is the endpoint
                 console.log('URL:', url);
                 $.ajax({ // Assuming you are using jQuery for AJAX
-                    "url": "url",
-                    "method": 'PUT',
-                    "data": JSON.stringify(user),
-                    "dataType": "JSON",
+                    url: url,
+                    method: 'PUT',
+                    data: JSON.stringify(user),
+                    dataType: 'json',
                     contentType: "application/json; charset=utf-8",
-                    "success": function(result) {
+                    success: function(result) {
                         console.log('Update successful:', result);
                     },
-                    "error": function(xhr, status, error) {
+                    error: function(xhr, status, error) {
                         console.error('Update error:', status, error);
                     }
                 });
